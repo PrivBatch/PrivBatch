@@ -9,7 +9,7 @@
  */
 (function () {
   'use strict';
-  const GITHUB_URL = 'https://github.com/privbatch/privbatch';
+  const GITHUB_URL = 'https://github.com/PrivBatch/PrivBatch';
   const HOSTED_URL = 'https://privbatch.com';
 
   function injectLinks() {

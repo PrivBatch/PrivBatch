@@ -51,7 +51,7 @@ These either require server-coordinated infrastructure (license verification) or
 No build step. No npm install. Just open the file.
 
 ```
-git clone https://github.com/privbatch/privbatch.git
+git clone https://github.com/PrivBatch/PrivBatch.git
 cd privbatch
 python3 -m http.server 8000
 # then open http://localhost:8000
