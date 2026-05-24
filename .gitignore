@@ -1,0 +1,12 @@
+# OS noise
+.DS_Store
+Thumbs.db
+*.log
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Defensive - this is vanilla JS, no node_modules should ever appear
+node_modules/

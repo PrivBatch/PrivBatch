@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/assets/icon-192.png">
+  <title>JWT Decoder - Free, Private, Offline | PrivBatch</title>
+  <meta name="description" content="Decode and inspect JWT tokens privately. Runs 100% in your browser - no uploads, no accounts.">
+  <link rel="canonical" href="https://privbatch.com/tools/jwt-decoder.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/light-mode.css">
+  <script src="../js/config.js"></script>
+  <script src="../js/gold-standard.js"></script>
+  <style>
+    body {
+      display: flex; flex-direction: column;
+      min-height: 100vh; box-sizing: border-box;
+    }
+
+    /* ── Tool title bar ── */
+    .tool-header {
+      position: relative; z-index: 1;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border-s); flex-shrink: 0;
+    }
+    .tool-header-inner {
+      max-width: 1400px; margin: 0 auto;
+      padding: 10px 24px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .tool-title { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; color: var(--text-1); }
+    .tool-header-spacer { flex: 1; }
+    .tool-badge-free {
+      font-family: var(--mono); font-size: 9px; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--free); display: flex; align-items: center; gap: 5px;
+    }
+    .tool-badge-free::before {
+      content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--free);
+    }
+
+    /* ── Settings bar ── */
+    .settings-bar {
+      position: relative; z-index: 96;
+      background: rgba(22,19,34,0.98);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px; height: 44px;
+      display: flex; align-items: center; gap: 16px;
+      overflow: visible; flex-shrink: 0;
+    }
+    .sbar-group { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+    .sbar-label { font-family: var(--mono); font-size: 10px; color: var(--text-3); white-space: nowrap; }
+    .sbar-sep   { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
+
+    .sbar-pill {
+      width: 26px; height: 14px; background: var(--accent-d);
+      border-radius: 99px; position: relative; cursor: pointer; flex-shrink: 0;
+    }
+    .sbar-pill::after {
+      content: ''; position: absolute;
+      width: 10px; height: 10px; background: #fff; border-radius: 50%;
+      top: 2px; right: 2px; transition: all 0.18s;
+    }
+    .sbar-pill.off { background: var(--text-3); }
+    .sbar-pill.off::after { right: auto; left: 2px; }
+
+    .sbar-algo {
+      font-family: var(--mono); font-size: 10px; font-weight: 600;
+      color: var(--text-2); background: rgba(167,139,250,0.08);
+      border: 1px solid var(--border); border-radius: 4px;
+      padding: 2px 8px; min-width: 48px; text-align: center;
+    }
+    .sbar-algo.has-value { color: var(--accent); border-color: rgba(167,139,250,0.28); }
+
+    /* ── Tool layout ── */
+    .tool-layout {
+      display: grid;
+      grid-template-columns: var(--left-w, 420px) 8px 1fr;
+      max-width: 1400px; width: 100%;
+      margin: 0 auto; padding: 12px 24px;
+      box-sizing: border-box; gap: 0;
+      align-items: start;
+      position: relative; z-index: 1;
+    }
+
+    /* ── Panel resizer ── */
+    .panel-resizer {
+      display: flex; align-items: flex-start;
+      justify-content: center; padding-top: 20px;
+      cursor: col-resize; user-select: none; z-index: 10;
+    }
+    .panel-resizer::after {
+      content: ''; width: 2px; height: 32px;
+      background: var(--border); border-radius: 1px; transition: background 0.15s;
+    }
+    .panel-resizer:hover::after { background: var(--border-h); }
+
+    /* ── Left panel ── */
+    .left-panel { display: flex; flex-direction: column; overflow: hidden; }
+
+    .left-tabs { display: flex; border-bottom: 1px solid var(--border-s); flex-shrink: 0; }
+    .left-tab {
+      font-family: var(--mono); font-size: 11px; font-weight: 500;
+      padding: 10px 18px; cursor: pointer; border: none;
+      background: transparent; color: var(--text-3);
+      border-bottom: 2px solid transparent;
+    }
+    .left-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .input-textarea {
+      width: 100%; min-height: 300px;
+      font-family: var(--mono); font-size: 12px; line-height: 1.65;
+      background: rgba(0,0,0,0.22); border: none;
+      border-bottom: 1px solid var(--border-s);
+      color: var(--text-1); padding: 14px 16px;
+      resize: vertical; outline: none; box-sizing: border-box;
+      transition: background 0.15s;
+    }
+    .input-textarea::placeholder { color: var(--text-3); }
+    .input-textarea:focus { background: rgba(0,0,0,0.3); }
+
+    .input-footer {
+      padding: 10px 14px; border-top: 1px solid var(--border-s);
+      display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+    }
+    .char-count { font-family: var(--mono); font-size: 10px; color: var(--text-3); flex: 1; }
+
+    /* ── Right column ── */
+    .right-col { display: flex; flex-direction: column; gap: 8px; }
+
+    /* State panel (empty / error) */
+    .jwt-state-panel { min-height: 160px; display: flex; flex-direction: column; justify-content: center; }
+
+    .jwt-empty {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 10px; color: var(--text-3);
+      font-family: var(--mono); font-size: 11px;
+      padding: 40px 20px; text-align: center;
+    }
+    .jwt-empty-icon { font-size: 32px; opacity: 0.25; }
+
+    .jwt-error { display: none; padding: 16px; }
+    .jwt-error.visible { display: block; }
+    .jwt-error-msg {
+      font-family: var(--mono); font-size: 11px;
+      color: var(--danger); line-height: 1.6; white-space: pre-wrap;
+    }
+
+    /* Decoded sections */
+    .jwt-sections { display: none; flex-direction: column; gap: 8px; }
+    .jwt-sections.visible { display: flex; }
+
+    .jwt-section-hd {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 16px; border-bottom: 1px solid var(--border-s);
+    }
+    .jwt-section-label {
+      font-family: var(--mono); font-size: 10px; font-weight: 600;
+      letter-spacing: 0.12em; color: var(--text-3);
+    }
+    .section-spacer { flex: 1; }
+
+    .jwt-code {
+      padding: 12px 16px; max-height: 220px; overflow-y: auto;
+      font-family: var(--mono); font-size: 12px; line-height: 1.75;
+      white-space: pre; overflow-x: auto;
+    }
+    .jwt-code::-webkit-scrollbar { width: 4px; height: 4px; }
+    .jwt-code::-webkit-scrollbar-track { background: transparent; }
+    .jwt-code::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .jwt-sig-raw {
+      padding: 12px 16px;
+      font-family: var(--mono); font-size: 11px; line-height: 1.65;
+      color: var(--text-2); word-break: break-all;
+    }
+    .sig-note {
+      margin-top: 8px; font-size: 10px; color: var(--text-3);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .sig-note.warn { color: #f59e0b; }
+
+    /* Metadata panel */
+    .jwt-meta-panel { padding: 0; }
+    .jwt-meta-inner { display: flex; flex-direction: column; }
+    .jwt-meta-row {
+      display: grid; grid-template-columns: 90px 1fr auto;
+      align-items: center; gap: 12px;
+      padding: 9px 16px; border-bottom: 1px solid var(--border-s);
+    }
+    .jwt-meta-row:last-child { border-bottom: none; }
+    .meta-key {
+      font-family: var(--mono); font-size: 10px; font-weight: 600;
+      letter-spacing: 0.08em; color: var(--text-3); text-transform: uppercase;
+    }
+    .meta-val {
+      font-family: var(--mono); font-size: 11px; color: var(--text-1); line-height: 1.5;
+    }
+    .meta-val.muted { color: var(--text-3); }
+    .meta-badge {
+      font-family: var(--mono); font-size: 9px; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;
+    }
+    .meta-badge.expired { color: var(--danger); }
+    .meta-badge.expired::before { content: '●'; font-size: 7px; }
+    .meta-badge.valid   { color: var(--free); }
+    .meta-badge.valid::before   { content: '●'; font-size: 7px; }
+
+    /* Syntax colours - reuse tok-* classes */
+    .tok-key  { color: #a78bfa; }
+    .tok-str  { color: #86efac; }
+    .tok-num  { color: #f59e0b; }
+    .tok-bool { color: #60a5fa; }
+    .tok-null { color: #94a3b8; }
+
+    @media (max-width: 1000px) {
+      .tool-layout { grid-template-columns: 1fr !important; padding: 8px 16px; }
+      .panel-resizer { display: none; }
+      .right-col { margin-top: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-layer dot-grid" aria-hidden="true">
+    <div class="blob blob-tool-1"></div>
+    <div class="blob blob-tool-2"></div>
+    <div class="blob blob-tool-3"></div>
+  </div>
+
+  <!-- Nav header -->
+  <header class="header-tool">
+    <div class="header-inner">
+      <a class="back-link" href="../index.html">&larr; All tools</a>
+      <div class="header-sep"></div>
+      <a href="../index.html">
+        <img src="/assets/logo-horizontal.svg" alt="PrivBatch" height="32">
+      </a>
+      <span class="tool-crumb" aria-label="Current tool: JWT Decoder">
+        <span class="sep">/</span>
+        <span class="name">JWT Decoder</span>
+      </span>
+      <div class="h-spacer"></div>
+      <div class="privacy-badge badge-inline">
+        <div class="dot" aria-hidden="true"></div>
+        100% offline
+      </div>
+      <input class="license-input" id="license-input" type="text"
+             placeholder="&#128273; license key" aria-label="License key">
+      <span class="license-unlocked" aria-live="polite"></span>
+    </div>
+  </header>
+
+  <!-- Tool title bar -->
+  <div class="tool-header">
+    <div class="tool-header-inner">
+      <span class="tool-title">JWT Decoder</span>
+      <div class="tool-header-spacer"></div>
+      <span class="tool-badge-free">Free tool</span>
+    </div>
+  </div>
+
+  <!-- Options toolbar -->
+  <div class="settings-bar">
+    <div class="sbar-group">
+      <span class="sbar-label">Verify signature</span>
+      <div class="sbar-pill off" id="tog-verify"
+           role="switch" aria-checked="false" tabindex="0"
+           aria-label="Toggle signature verification"></div>
+    </div>
+    <div class="sbar-sep"></div>
+    <div class="sbar-group">
+      <span class="sbar-label">Algorithm:</span>
+      <span class="sbar-algo" id="algo-display"> - </span>
+    </div>
+    <!-- GS buttons injected by gold-standard.js -->
+  </div>
+
+  <!-- Split layout -->
+  <div class="tool-layout" id="tool-layout">
+
+    <!-- ═══ LEFT PANEL ═══ -->
+    <div class="glass-panel left-panel">
+
+      <div class="left-tabs" role="tablist">
+        <button class="left-tab active" aria-selected="true">&#128203; Paste JWT</button>
+      </div>
+
+      <textarea class="input-textarea" id="jwt-input"
+        placeholder="Paste a JWT token here…&#10;&#10;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+        spellcheck="false" autocomplete="off"
+        aria-label="JWT input"></textarea>
+
+      <div class="input-footer">
+        <span class="char-count" id="char-count">0 characters</span>
+        <button class="btn-secondary" id="sample-btn">Load sample</button>
+        <button class="btn-secondary" id="clear-btn">Clear</button>
+      </div>
+
+    </div><!-- /left-panel -->
+
+    <!-- ═══ RESIZER ═══ -->
+    <div class="panel-resizer" id="panel-resizer" aria-hidden="true"></div>
+
+    <!-- ═══ RIGHT COLUMN ═══ -->
+    <div class="right-col" id="right-col">
+
+      <!-- Empty / error state -->
+      <div class="glass-panel jwt-state-panel" id="jwt-state-panel">
+        <div class="jwt-empty" id="jwt-empty">
+          <div class="jwt-empty-icon" aria-hidden="true">&#128272;</div>
+          Paste a JWT token to decode
+        </div>
+        <div class="jwt-error" id="jwt-error" role="alert">
+          <div class="jwt-error-msg" id="jwt-error-msg"></div>
+        </div>
+      </div>
+
+      <!-- Decoded sections - hidden until a valid token is pasted -->
+      <div class="jwt-sections" id="jwt-sections" aria-live="polite">
+
+        <!-- HEADER -->
+        <div class="glass-panel">
+          <div class="jwt-section-hd">
+            <span class="jwt-section-label">Header</span>
+            <div class="section-spacer"></div>
+            <button class="panel-action" id="copy-header">Copy</button>
+          </div>
+          <div class="jwt-code" id="jwt-header-code" aria-label="JWT header"></div>
+        </div>
+
+        <!-- PAYLOAD -->
+        <div class="glass-panel">
+          <div class="jwt-section-hd">
+            <span class="jwt-section-label">Payload</span>
+            <div class="section-spacer"></div>
+            <button class="panel-action" id="copy-payload">Copy</button>
+          </div>
+          <div class="jwt-code" id="jwt-payload-code" aria-label="JWT payload"></div>
+        </div>
+
+        <!-- SIGNATURE -->
+        <div class="glass-panel">
+          <div class="jwt-section-hd">
+            <span class="jwt-section-label">Signature</span>
+            <div class="section-spacer"></div>
+            <button class="panel-action" id="copy-sig">Copy</button>
+          </div>
+          <div class="jwt-sig-raw" id="jwt-sig-raw" aria-label="JWT signature"></div>
+          <div id="sig-note" class="sig-note" style="padding: 0 16px 12px; display:none"></div>
+        </div>
+
+        <!-- METADATA -->
+        <div class="glass-panel jwt-meta-panel" id="jwt-meta" style="display:none">
+          <div class="jwt-meta-inner">
+            <div class="jwt-meta-row" id="meta-iat-row" style="display:none">
+              <span class="meta-key">Issued at</span>
+              <span class="meta-val" id="meta-iat"> - </span>
+              <span></span>
+            </div>
+            <div class="jwt-meta-row" id="meta-exp-row" style="display:none">
+              <span class="meta-key">Expires</span>
+              <span class="meta-val" id="meta-exp"> - </span>
+              <span class="meta-badge" id="meta-expiry-badge"></span>
+            </div>
+            <div class="jwt-meta-row" id="meta-time-row" style="display:none">
+              <span class="meta-key">Time</span>
+              <span class="meta-val muted" id="meta-time"> - </span>
+              <span></span>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /jwt-sections -->
+
+    </div><!-- /right-col -->
+
+  </div><!-- /tool-layout -->
+
+  <!-- Footer -->
+  <footer class="footer-tool">
+    <div class="footer-inner">
+      <span>© 2026 PrivBatch</span>
+      <a href="../privacy.html">Privacy</a>
+      <a href="../changelog.html">Changelog</a>
+      <a href="../licence.html">Licence</a>
+      <span class="footer-note">All processing is local - zero uploads, zero logs</span>
+    </div>
+  </footer>
+
+  <!-- GS overlays injected by gold-standard.js -->
+
+  <script src="../js/license.js"></script>
+  <script>
+  (function () {
+    'use strict';
+
+    const $ = id => document.getElementById(id);
+
+    /* ════════ DOM ════════ */
+    const DOM = {
+      jwtInput:        $('jwt-input'),
+      charCount:       $('char-count'),
+      sampleBtn:       $('sample-btn'),
+      clearBtn:        $('clear-btn'),
+      togVerify:       $('tog-verify'),
+      algoDisplay:     $('algo-display'),
+      statePanel:      $('jwt-state-panel'),
+      jwtEmpty:        $('jwt-empty'),
+      jwtError:        $('jwt-error'),
+      jwtErrorMsg:     $('jwt-error-msg'),
+      jwtSections:     $('jwt-sections'),
+      headerCode:      $('jwt-header-code'),
+      payloadCode:     $('jwt-payload-code'),
+      sigRaw:          $('jwt-sig-raw'),
+      sigNote:         $('sig-note'),
+      copyHeader:      $('copy-header'),
+      copyPayload:     $('copy-payload'),
+      copySig:         $('copy-sig'),
+      jwtMeta:         $('jwt-meta'),
+      metaIatRow:      $('meta-iat-row'),
+      metaExpRow:      $('meta-exp-row'),
+      metaTimeRow:     $('meta-time-row'),
+      metaIat:         $('meta-iat'),
+      metaExp:         $('meta-exp'),
+      metaExpiryBadge: $('meta-expiry-badge'),
+      metaTime:        $('meta-time'),
+      layout:          $('tool-layout'),
+    };
+
+    /* ════════ STATE ════════ */
+    const state = {
+      verify:     false,
+      decoded:    null,   // { header, payload, sig }
+      raw:        '',
+    };
+
+    /* ════════ UTILS ════════ */
+    function esc(s) {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function b64urlDecode(str) {
+      // Restore standard Base64 from URL-safe variant, add padding
+      let s = str.replace(/-/g, '+').replace(/_/g, '/');
+      const rem = s.length % 4;
+      if (rem) s += '='.repeat(4 - rem);
+      return decodeURIComponent(escape(atob(s)));
+    }
+
+    function formatDate(unixSec) {
+      const d = new Date(unixSec * 1000);
+      return d.toUTCString().replace(' GMT', ' UTC');
+    }
+
+    function formatDuration(seconds) {
+      const abs = Math.abs(seconds);
+      if (abs < 60) return abs + 's';
+      if (abs < 3600) return Math.floor(abs / 60) + 'm ' + (abs % 60) + 's';
+      const h = Math.floor(abs / 3600);
+      const m = Math.floor((abs % 3600) / 60);
+      if (h < 24) return h + 'h ' + m + 'm';
+      const d = Math.floor(h / 24);
+      const rh = h % 24;
+      return d + 'd ' + rh + 'h';
+    }
+
+    /* ════════ SYNTAX HIGHLIGHT ════════ */
+    function highlight(obj) {
+      const json = JSON.stringify(obj, null, 2);
+      return tokenize(json);
+    }
+
+    function tokenize(json) {
+      let out = '';
+      let i = 0;
+
+      while (i < json.length) {
+        const ch = json[i];
+
+        if (ch === '"') {
+          // Scan to end of string, respecting escape sequences
+          let j = i + 1;
+          while (j < json.length) {
+            if (json[j] === '\\') { j += 2; continue; }
+            if (json[j] === '"')  { j++; break; }
+            j++;
+          }
+          const raw = json.slice(i, j);
+          // Look ahead for colon (key)
+          let k = j;
+          while (k < json.length && (json[k] === ' ' || json[k] === '\n' || json[k] === '\r')) k++;
+          if (json[k] === ':') {
+            out += '<span class="tok-key">' + esc(raw) + '</span>';
+          } else {
+            out += '<span class="tok-str">' + esc(raw) + '</span>';
+          }
+          i = j;
+
+        } else if (ch === '-' || (ch >= '0' && ch <= '9')) {
+          let j = i;
+          while (j < json.length && /[-\d.eE+]/.test(json[j])) j++;
+          out += '<span class="tok-num">' + esc(json.slice(i, j)) + '</span>';
+          i = j;
+
+        } else if (json.slice(i, i + 4) === 'true') {
+          out += '<span class="tok-bool">true</span>'; i += 4;
+
+        } else if (json.slice(i, i + 5) === 'false') {
+          out += '<span class="tok-bool">false</span>'; i += 5;
+
+        } else if (json.slice(i, i + 4) === 'null') {
+          out += '<span class="tok-null">null</span>'; i += 4;
+
+        } else {
+          out += esc(ch); i++;
+        }
+      }
+      return out;
+    }
+
+    /* ════════ DECODE ════════ */
+    function decodeJWT(token) {
+      token = token.trim();
+      if (!token) return null;
+
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        throw new Error(
+          'Invalid JWT format.\n' +
+          'A JWT must have exactly three Base64URL-encoded segments separated by dots.\n' +
+          'Got ' + parts.length + ' segment' + (parts.length === 1 ? '' : 's') + '.'
+        );
+      }
+
+      let header, payload;
+      try {
+        header = JSON.parse(b64urlDecode(parts[0]));
+      } catch (e) {
+        throw new Error('Failed to decode JWT header.\nThe first segment is not valid Base64URL JSON.\n\n' + e.message);
+      }
+      try {
+        payload = JSON.parse(b64urlDecode(parts[1]));
+      } catch (e) {
+        throw new Error('Failed to decode JWT payload.\nThe second segment is not valid Base64URL JSON.\n\n' + e.message);
+      }
+
+      return { header, payload, sig: parts[2], raw: token };
+    }
+
+    /* ════════ RENDER ════════ */
+    function renderEmpty() {
+      DOM.jwtEmpty.style.display   = 'flex';
+      DOM.jwtError.className       = 'jwt-error';
+      DOM.statePanel.style.display = '';
+      DOM.jwtSections.className    = 'jwt-sections';
+      DOM.algoDisplay.textContent  = ' - ';
+      DOM.algoDisplay.className    = 'sbar-algo';
+    }
+
+    function renderError(msg) {
+      DOM.jwtEmpty.style.display   = 'none';
+      DOM.jwtErrorMsg.textContent  = msg;
+      DOM.jwtError.className       = 'jwt-error visible';
+      DOM.statePanel.style.display = '';
+      DOM.jwtSections.className    = 'jwt-sections';
+      DOM.algoDisplay.textContent  = ' - ';
+      DOM.algoDisplay.className    = 'sbar-algo';
+    }
+
+    function renderDecoded(decoded) {
+      const { header, payload, sig } = decoded;
+
+      DOM.statePanel.style.display = 'none';
+      DOM.jwtSections.className    = 'jwt-sections visible';
+
+      // Algorithm display
+      const alg = header.alg || ' - ';
+      DOM.algoDisplay.textContent = alg;
+      DOM.algoDisplay.className   = 'sbar-algo has-value';
+
+      // Header section
+      DOM.headerCode.innerHTML = highlight(header);
+
+      // Payload section
+      DOM.payloadCode.innerHTML = highlight(payload);
+
+      // Signature section
+      DOM.sigRaw.textContent = sig;
+
+      // Signature note
+      if (state.verify) {
+        DOM.sigNote.style.display = '';
+        DOM.sigNote.className     = 'sig-note warn';
+        DOM.sigNote.textContent   = '⚠ Signature verification requires the secret key - cannot verify in browser without it.';
+      } else {
+        DOM.sigNote.style.display = 'none';
+      }
+
+      // Metadata
+      const now = Math.floor(Date.now() / 1000);
+      let hasMeta = false;
+
+      if (typeof payload.iat === 'number') {
+        DOM.metaIatRow.style.display = '';
+        DOM.metaIat.textContent = formatDate(payload.iat);
+        hasMeta = true;
+      } else {
+        DOM.metaIatRow.style.display = 'none';
+      }
+
+      if (typeof payload.exp === 'number') {
+        DOM.metaExpRow.style.display  = '';
+        DOM.metaTimeRow.style.display = '';
+        DOM.metaExp.textContent       = formatDate(payload.exp);
+        const diff = payload.exp - now;
+        if (diff < 0) {
+          DOM.metaExpiryBadge.textContent = 'Expired';
+          DOM.metaExpiryBadge.className   = 'meta-badge expired';
+          DOM.metaTime.textContent        = 'Expired ' + formatDuration(diff) + ' ago';
+        } else {
+          DOM.metaExpiryBadge.textContent = 'Valid';
+          DOM.metaExpiryBadge.className   = 'meta-badge valid';
+          DOM.metaTime.textContent        = 'Expires in ' + formatDuration(diff);
+        }
+        hasMeta = true;
+      } else {
+        DOM.metaExpRow.style.display  = 'none';
+        DOM.metaTimeRow.style.display = 'none';
+      }
+
+      DOM.jwtMeta.style.display = hasMeta ? '' : 'none';
+
+      // Store for copy
+      state.decoded = decoded;
+    }
+
+    /* ════════ PROCESS ════════ */
+    function process(token) {
+      state.raw = token;
+      DOM.charCount.textContent = token.length === 0
+        ? '0 characters'
+        : token.length.toLocaleString() + ' characters';
+
+      if (!token.trim()) {
+        state.decoded = null;
+        renderEmpty();
+        return;
+      }
+
+      try {
+        const decoded = decodeJWT(token);
+        state.decoded = decoded;
+        renderDecoded(decoded);
+      } catch (e) {
+        state.decoded = null;
+        renderError(e.message);
+      }
+    }
+
+    /* ════════ INPUT ════════ */
+    let debounceTimer;
+    DOM.jwtInput.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => process(DOM.jwtInput.value), 120);
+    });
+
+    DOM.clearBtn.addEventListener('click', () => {
+      DOM.jwtInput.value = '';
+      process('');
+      DOM.jwtInput.focus();
+    });
+
+    DOM.sampleBtn.addEventListener('click', () => {
+      DOM.jwtInput.value = buildSampleJWT();
+      process(DOM.jwtInput.value);
+      DOM.jwtInput.focus();
+    });
+
+    /* ════════ VERIFY TOGGLE ════════ */
+    function toggleVerify() {
+      state.verify = !state.verify;
+      DOM.togVerify.classList.toggle('off', !state.verify);
+      DOM.togVerify.setAttribute('aria-checked', String(state.verify));
+      if (state.decoded) renderDecoded(state.decoded);
+    }
+    DOM.togVerify.addEventListener('click', toggleVerify);
+    DOM.togVerify.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleVerify(); }
+    });
+
+    /* ════════ COPY ════════ */
+    async function copyText(text, btn) {
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(text);
+        const orig = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = orig; }, 1500);
+      } catch (_) {}
+    }
+
+    DOM.copyHeader.addEventListener('click', () => {
+      if (!state.decoded) return;
+      copyText(JSON.stringify(state.decoded.header, null, 2), DOM.copyHeader);
+    });
+
+    DOM.copyPayload.addEventListener('click', () => {
+      if (!state.decoded) return;
+      copyText(JSON.stringify(state.decoded.payload, null, 2), DOM.copyPayload);
+    });
+
+    DOM.copySig.addEventListener('click', () => {
+      if (!state.decoded) return;
+      copyText(state.decoded.sig, DOM.copySig);
+    });
+
+    /* ════════ PANEL RESIZER ════════ */
+    (function () {
+      const resizer = $('panel-resizer');
+      const layout  = $('tool-layout');
+      let startX, startW, dragging = false;
+      resizer.addEventListener('mousedown', e => {
+        startX   = e.clientX;
+        startW   = parseInt(getComputedStyle(layout).getPropertyValue('--left-w') || '420', 10);
+        dragging = true;
+        document.body.style.cursor     = 'col-resize';
+        document.body.style.userSelect = 'none';
+      });
+      document.addEventListener('mousemove', e => {
+        if (!dragging) return;
+        const newW = Math.min(700, Math.max(260, startW + e.clientX - startX));
+        layout.style.setProperty('--left-w', newW + 'px');
+      });
+      document.addEventListener('mouseup', () => {
+        if (!dragging) return;
+        dragging = false;
+        document.body.style.cursor     = '';
+        document.body.style.userSelect = '';
+      });
+    })();
+
+    /* ════════ SAMPLE JWT ════════ */
+    function b64url(obj) {
+      const json = JSON.stringify(obj);
+      const b64  = btoa(unescape(encodeURIComponent(json)));
+      return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    }
+
+    function buildSampleJWT() {
+      const header  = { alg: 'HS256', typ: 'JWT' };
+      const payload = {
+        sub:   '1234567890',
+        name:  'Alice Müller',
+        email: 'alice@example.com',
+        roles: ['admin', 'editor'],
+        iat:   1700000000,   // 2023-11-14 - already in the past
+        exp:   1700086400,   // 2023-11-15 - expired
+      };
+      // Fake HMAC-SHA256 signature (not cryptographically valid - for demo only)
+      const fakeSig = 'SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+      return b64url(header) + '.' + b64url(payload) + '.' + fakeSig;
+    }
+
+    /* ════════ INIT ════════ */
+    LicenseManager.init();
+
+  })();
+
+  /* ════════ GOLD STANDARD INIT ════════ */
+  GoldStandard.init({
+    toolName : 'JWT Decoder',
+    tier     : 'free',
+    onConvert : null,
+    onDownload: null,
+    shortcuts: [
+      { keys: ['Ctrl', 'Enter'], desc: 'Format / process'   },
+      { keys: ['Ctrl', 'S'],     desc: 'Download output'    },
+      { keys: ['Ctrl', 'K'],     desc: 'Open tool switcher' },
+      { keys: ['Escape'],        desc: 'Close overlay'      },
+      { keys: ['?'],             desc: 'Toggle shortcuts'   },
+    ],
+  });
+  </script>
+  <script src="../js/oss-page-chrome.js"></script>
+</body>
+</html>

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/assets/icon-192.png">
+  <title>YAML ↔ JSON Converter - Free, Private, Offline | PrivBatch</title>
+  <meta name="description" content="Convert YAML to JSON and JSON to YAML instantly in your browser. No uploads, no accounts, 100% private.">
+  <link rel="canonical" href="https://privbatch.com/tools/yaml-json.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/light-mode.css">
+  <script src="../js/config.js"></script>
+  <script src="../js/gold-standard.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+  <style>
+    body { display:flex; flex-direction:column; min-height:100vh; box-sizing:border-box; }
+    .tool-header { position:relative; z-index:1; background:var(--bg); border-bottom:1px solid var(--border-s); flex-shrink:0; }
+    .tool-header-inner { max-width:1400px; margin:0 auto; padding:10px 24px; display:flex; align-items:center; gap:16px; }
+    .tool-title { font-size:18px; font-weight:800; letter-spacing:-0.5px; color:var(--text-1); }
+    .tool-header-spacer { flex:1; }
+    .tool-badge-free { font-family:var(--mono); font-size:9px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--free); display:flex; align-items:center; gap:5px; }
+    .tool-badge-free::before { content:''; width:4px; height:4px; border-radius:50%; background:var(--free); }
+    .settings-bar { position:relative; z-index:96; background:rgba(22,19,34,0.98); border-bottom:1px solid var(--border); padding:0 24px; height:44px; display:flex; align-items:center; gap:16px; overflow:visible; flex-shrink:0; }
+    .sbar-group { display:flex; align-items:center; gap:7px; flex-shrink:0; }
+    .sbar-label { font-family:var(--mono); font-size:10px; color:var(--text-3); white-space:nowrap; }
+    .sbar-sep { width:1px; height:18px; background:var(--border); flex-shrink:0; }
+    .sbar-toggle { display:flex; border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+    .sbar-mode-btn { font-family:var(--mono); font-size:10px; font-weight:600; padding:4px 10px; cursor:pointer; border:none; background:transparent; color:var(--text-3); transition:background 0.15s,color 0.15s; white-space:nowrap; }
+    .sbar-mode-btn.active { background:rgba(167,139,250,0.15); color:var(--accent); }
+    .sbar-mode-sep { width:1px; background:var(--border); }
+    .tool-layout { display:grid; grid-template-columns:var(--left-w,420px) 8px 1fr; max-width:1400px; width:100%; margin:0 auto; padding:12px 24px; box-sizing:border-box; position:relative; z-index:1; }
+    .panel-resizer { display:flex; align-items:flex-start; justify-content:center; padding-top:20px; cursor:col-resize; user-select:none; }
+    .panel-resizer::after { content:''; width:2px; height:32px; background:var(--border); border-radius:1px; transition:background 0.15s; }
+    .panel-resizer:hover::after { background:rgba(167,139,250,0.4); }
+    .left-panel { display:flex; flex-direction:column; overflow:hidden; }
+    .right-col { display:flex; flex-direction:column; }
+    .output-panel { display:flex; flex-direction:column; overflow:hidden; }
+    .txt-area { width:100%; flex:1; min-height:0; height:360px; font-family:var(--mono); font-size:12px; line-height:1.65; background:rgba(0,0,0,0.22); border:none; color:var(--text-1); padding:14px 16px; resize:none; outline:none; box-sizing:border-box; }
+    .txt-area::placeholder { color:var(--text-3); }
+    .txt-area:focus { background:rgba(0,0,0,0.3); }
+    .input-footer { padding:10px 14px; border-top:1px solid var(--border-s); display:flex; align-items:center; gap:8px; flex-shrink:0; }
+    .char-count { font-family:var(--mono); font-size:10px; color:var(--text-3); flex:1; }
+    .output-body { height:360px; overflow-y:auto; display:flex; flex-direction:column; }
+    .output-empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; color:var(--text-3); font-family:var(--mono); font-size:11px; }
+    .output-empty-icon { font-size:32px; opacity:0.25; }
+    .code-area { padding:16px; font-family:var(--mono); font-size:12px; line-height:1.75; overflow-x:auto; white-space:pre; display:none; color:var(--text-1); }
+    .code-area.visible { display:block; }
+    .error-box { padding:16px; font-family:var(--mono); font-size:11px; color:var(--danger); line-height:1.6; display:none; white-space:pre-wrap; }
+    .error-box.visible { display:block; }
+    .output-footer { padding:8px 16px; border-top:1px solid var(--border-s); display:flex; align-items:center; gap:16px; flex-shrink:0; }
+    .output-stat { font-family:var(--mono); font-size:10px; color:var(--text-3); }
+    .output-stat .val { color:var(--text-2); }
+    .stats-bar { font-family:var(--mono); font-size:10px; color:var(--free); padding:5px 16px; display:none; flex-shrink:0; animation:stats-in 0.25s ease-out; border-top:1px solid rgba(45,212,191,0.15); background:rgba(45,212,191,0.04); }
+    .stats-bar.visible { display:block; }
+    @keyframes stats-in { from{opacity:0;transform:translateY(-3px)} to{opacity:1;transform:translateY(0)} }
+  </style>
+</head>
+<body>
+  <div class="bg-layer dot-grid" aria-hidden="true"><div class="blob blob-tool-1"></div><div class="blob blob-tool-2"></div><div class="blob blob-tool-3"></div></div>
+  <header class="header-tool">
+    <div class="header-inner">
+      <a class="back-link" href="../index.html">&larr; All tools</a>
+      <div class="header-sep"></div>
+      <a href="../index.html"><img src="/assets/logo-horizontal.svg" alt="PrivBatch" height="32"></a>
+      <span class="tool-crumb" aria-label="Current tool: YAML ↔ JSON"><span class="sep">/</span><span class="name">YAML ↔ JSON</span></span>
+      <div class="h-spacer"></div>
+      <div class="privacy-badge badge-inline"><div class="dot" aria-hidden="true"></div>100% offline</div>
+      <input class="license-input" id="license-input" type="text" placeholder="&#128273; license key" aria-label="License key">
+      <span class="license-unlocked" aria-live="polite"></span>
+    </div>
+  </header>
+  <div class="tool-header">
+    <div class="tool-header-inner">
+      <span class="tool-title">YAML &#8596; JSON</span>
+      <div class="tool-header-spacer"></div>
+      <span class="tool-badge-live">Live preview</span>
+      <span class="tool-badge-free">Free tool &bull; No limits</span>
+    </div>
+  </div>
+  <div class="settings-bar">
+    <div class="sbar-group">
+      <span class="sbar-label">Direction:</span>
+      <div class="sbar-toggle">
+        <button class="sbar-mode-btn active" id="mode-y2j">YAML → JSON</button>
+        <div class="sbar-mode-sep"></div>
+        <button class="sbar-mode-btn" id="mode-j2y">JSON → YAML</button>
+      </div>
+    </div>
+    <!-- GS buttons (Recent, Prove It, Shortcuts) injected by gold-standard.js -->
+  </div>
+  <div class="tool-layout" id="tool-layout">
+    <div class="glass-panel left-panel">
+      <div style="display:flex;border-bottom:1px solid var(--border-s)">
+        <button class="sbar-btn" id="btn-sample" style="margin:8px 12px;font-size:10px">&#9889; Sample</button>
+        <span style="flex:1"></span>
+        <button class="sbar-btn" id="btn-clear-in" style="margin:8px 12px;font-size:10px">Clear</button>
+      </div>
+      <textarea class="txt-area" id="input-area" placeholder="Paste YAML here…" spellcheck="false" aria-label="Input"></textarea>
+      <div class="input-footer">
+        <span class="char-count" id="char-count">0 characters</span>
+      </div>
+    </div>
+    <div class="panel-resizer" id="panel-resizer" aria-hidden="true"></div>
+    <div class="right-col">
+      <div class="glass-panel output-panel">
+        <div class="panel-header">
+          <span class="panel-title panel-title-accent">Output</span>
+          <div class="panel-spacer"></div>
+          <button class="panel-action" id="copy-btn">Copy</button>
+          <button class="panel-action" id="download-btn">Download</button>
+          <button class="panel-action" id="expand-btn">Expand &#8597;</button>
+        </div>
+        <div class="output-body" id="output-body">
+          <div class="output-empty" id="output-empty"><div class="output-empty-icon">&#8644;</div>Paste YAML or JSON to convert</div>
+          <div class="error-box" id="error-box"></div>
+          <div class="code-area" id="code-area"></div>
+        </div>
+        <div class="output-footer">
+          <span class="output-stat">Lines: <span class="val" id="stat-lines"> - </span></span>
+          <span class="output-stat">Size: <span class="val" id="stat-size"> - </span></span>
+        </div>
+      </div>
+      <div class="stats-bar" id="stats-bar" aria-live="polite"></div>
+    </div>
+  </div>
+  <footer class="footer-tool"><div class="footer-inner"><span>© 2026 PrivBatch</span><a href="../privacy.html">Privacy</a><a href="../changelog.html">Changelog</a><a href="../licence.html">Licence</a><span class="footer-note">All processing is local - zero uploads, zero logs</span></div></footer>
+  <!-- GS overlays (Prove It, Shortcuts, Switcher) injected by gold-standard.js -->
+  <script src="../js/license.js"></script>
+  <script>
+  (function(){
+    'use strict';
+    const $=id=>document.getElementById(id);
+
+    const DOM={
+      input:$('input-area'),charCount:$('char-count'),
+      outputEmpty:$('output-empty'),codeArea:$('code-area'),errorBox:$('error-box'),
+      statLines:$('stat-lines'),statSize:$('stat-size'),
+      copyBtn:$('copy-btn'),downloadBtn:$('download-btn'),expandBtn:$('expand-btn'),
+      outputBody:$('output-body'),statsBar:$('stats-bar'),
+    };
+    const state={mode:'yaml2json',lastOutput:'',ext:'json',expanded:false};
+
+    const SAMPLE_YAML=`name: Alice Müller\nage: 30\nactive: true\nroles:\n  - admin\n  - editor\naddress:\n  street: Hauptstraße 12\n  city: Berlin\n  country: DE\npreferences:\n  theme: dark\n  notifications:\n    email: true\n    sms: false\n`;
+    const SAMPLE_JSON=JSON.stringify({name:'Bob Smith',age:25,active:false,roles:['viewer'],address:{city:'Hamburg',country:'DE'},preferences:{theme:'light'}},null,2);
+
+    function fmtSize(b){return b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(1)+' MB';}
+    function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+    const showStatsBar = (ms, inB, outB) => GoldStandard.showStatsBar(DOM.statsBar, ms, inB, outB);
+
+    function process(text){
+      DOM.charCount.textContent=text.length?text.length.toLocaleString()+' characters':'0 characters';
+      if(!text.trim()){renderEmpty();DOM.statsBar.className='stats-bar';return;}
+      const t0=performance.now(),inB=new Blob([text]).size;
+      try{
+        let output;
+        if(state.mode==='yaml2json'){
+          const parsed=jsyaml.load(text);
+          output=JSON.stringify(parsed,null,2);
+          state.ext='json';
+        }else{
+          const parsed=JSON.parse(text);
+          output=jsyaml.dump(parsed,{indent:2,lineWidth:-1});
+          state.ext='yaml';
+        }
+        state.lastOutput=output;
+        DOM.outputEmpty.style.display='none';
+        DOM.errorBox.className='error-box';
+        DOM.codeArea.textContent=output;
+        DOM.codeArea.className='code-area visible';
+        const outB=new Blob([output]).size;
+        DOM.statLines.textContent=output.split('\n').length+' lines';
+        DOM.statSize.textContent=fmtSize(outB);
+        GoldStandard.History.save({tool:'YAML ↔ JSON',timestamp:Date.now(),inputSize:text.length,mode:state.mode});
+        showStatsBar(Math.round(performance.now()-t0),inB,outB);
+      }catch(e){
+        DOM.outputEmpty.style.display='none';
+        DOM.codeArea.className='code-area';
+        DOM.errorBox.textContent=e.message;
+        DOM.errorBox.className='error-box visible';
+        DOM.statLines.textContent=' - ';DOM.statSize.textContent=' - ';
+        DOM.statsBar.className='stats-bar';
+      }
+    }
+    function renderEmpty(){DOM.outputEmpty.style.display='';DOM.codeArea.className='code-area';DOM.errorBox.className='error-box';DOM.statLines.textContent=' - ';DOM.statSize.textContent=' - ';}
+    function triggerProcess(){process(DOM.input.value);}
+    function triggerClear(){DOM.input.value='';process('');DOM.input.focus();}
+    function downloadOutput(){
+      if(!state.lastOutput)return;
+      const blob=new Blob([state.lastOutput],{type:'text/plain'});
+      const url=URL.createObjectURL(blob);const a=document.createElement('a');
+      a.href=url;a.download='output.'+state.ext;a.click();URL.revokeObjectURL(url);
+    }
+
+    let debounce;
+    DOM.input.addEventListener('input',()=>{clearTimeout(debounce);debounce=setTimeout(()=>process(DOM.input.value),150);});
+    $('btn-clear-in').addEventListener('click',triggerClear);
+    $('btn-sample').addEventListener('click',()=>{DOM.input.value=state.mode==='yaml2json'?SAMPLE_YAML:SAMPLE_JSON;process(DOM.input.value);});
+    $('mode-y2j').addEventListener('click',()=>{state.mode='yaml2json';$('mode-y2j').classList.add('active');$('mode-j2y').classList.remove('active');DOM.input.placeholder='Paste YAML here…';process(DOM.input.value);});
+    $('mode-j2y').addEventListener('click',()=>{state.mode='json2yaml';$('mode-j2y').classList.add('active');$('mode-y2j').classList.remove('active');DOM.input.placeholder='Paste JSON here…';process(DOM.input.value);});
+
+    DOM.copyBtn.addEventListener('click',async()=>{if(!state.lastOutput)return;try{await navigator.clipboard.writeText(state.lastOutput);DOM.copyBtn.textContent='Copied!';DOM.copyBtn.style.color='#2DD4BF';DOM.copyBtn.style.borderColor='rgba(45,212,191,0.4)';setTimeout(()=>{DOM.copyBtn.textContent='Copy';DOM.copyBtn.style.color='';DOM.copyBtn.style.borderColor='';},2000);}catch(_){}});
+    DOM.downloadBtn.addEventListener('click',downloadOutput);
+    DOM.expandBtn.addEventListener('click',()=>{state.expanded=!state.expanded;DOM.outputBody.style.height=state.expanded?'650px':'360px';DOM.expandBtn.textContent=state.expanded?'Collapse ↕':'Expand ↕';});
+    (function(){const r=$('panel-resizer'),l=$('tool-layout');if(!r||!l)return;let sx,sw,d=false;r.addEventListener('mousedown',e=>{sx=e.clientX;sw=parseInt(getComputedStyle(l).getPropertyValue('--left-w')||'420',10);d=true;document.body.style.cursor='col-resize';document.body.style.userSelect='none';});document.addEventListener('mousemove',e=>{if(!d)return;l.style.setProperty('--left-w',Math.min(700,Math.max(260,sw+e.clientX-sx))+'px');});document.addEventListener('mouseup',()=>{if(!d)return;d=false;document.body.style.cursor='';document.body.style.userSelect='';});})();
+    GoldStandard.init({
+      toolName : 'YAML ↔ JSON',
+      tier     : 'free',
+      onConvert : triggerProcess,
+      onDownload: downloadOutput,
+      shortcuts: [
+        { keys: ['Ctrl', 'Enter'], desc: 'Convert / process' },
+        { keys: ['Ctrl', 'S'],     desc: 'Download output' },
+        { keys: ['Ctrl', 'K'],     desc: 'Open tool switcher' },
+        { keys: ['Escape'],        desc: 'Close overlay / clear' },
+        { keys: ['?'],             desc: 'Toggle shortcuts' },
+      ],
+    });
+  })();
+  </script>
+  <script src="../js/oss-page-chrome.js"></script>
+</body>
+</html>

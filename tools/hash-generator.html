@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/assets/icon-192.png">
+  <title>Hash Generator - MD5, SHA1, SHA256, SHA512 | PrivBatch</title>
+  <meta name="description" content="Hash any text or file with MD5, SHA1, SHA256, SHA512. 100% offline - your data never leaves your browser.">
+  <link rel="canonical" href="https://privbatch.com/tools/hash-generator.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/light-mode.css">
+  <script src="../js/config.js"></script>
+  <script src="../js/gold-standard.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+  <style>
+    body{display:flex;flex-direction:column;min-height:100vh;box-sizing:border-box;}
+    .tool-header{position:relative;z-index:1;background:var(--bg);border-bottom:1px solid var(--border-s);flex-shrink:0;}
+    .tool-header-inner{max-width:1400px;margin:0 auto;padding:10px 24px;display:flex;align-items:center;gap:16px;}
+    .tool-title{font-size:18px;font-weight:800;letter-spacing:-0.5px;color:var(--text-1);}
+    .tool-header-spacer{flex:1;}
+    .tool-badge-free{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--free);display:flex;align-items:center;gap:5px;}
+    .tool-badge-free::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--free);}
+    .settings-bar{position:relative;z-index:96;background:rgba(22,19,34,0.98);border-bottom:1px solid var(--border);padding:0 24px;height:44px;display:flex;align-items:center;gap:16px;overflow:visible;flex-shrink:0;}
+    .sbar-group{display:flex;align-items:center;gap:7px;flex-shrink:0;}
+    .sbar-sep{width:1px;height:18px;background:var(--border);flex-shrink:0;}
+    .tool-layout{display:grid;grid-template-columns:var(--left-w,420px) 8px 1fr;max-width:1400px;width:100%;margin:0 auto;padding:12px 24px;box-sizing:border-box;position:relative;z-index:1;}
+    .panel-resizer{display:flex;align-items:flex-start;justify-content:center;padding-top:20px;cursor:col-resize;user-select:none;}
+    .panel-resizer::after{content:'';width:2px;height:32px;background:var(--border);border-radius:1px;transition:background 0.15s;}
+    .panel-resizer:hover::after{background:rgba(167,139,250,0.4);}
+    .left-panel{display:flex;flex-direction:column;overflow:hidden;}
+    .right-col{display:flex;flex-direction:column;}
+    .txt-area{width:100%;flex:1;min-height:200px;font-family:var(--mono);font-size:12px;line-height:1.65;background:rgba(0,0,0,0.22);border:none;color:var(--text-1);padding:14px 16px;resize:vertical;outline:none;box-sizing:border-box;}
+    .txt-area::placeholder{color:var(--text-3);}
+    .txt-area:focus{background:rgba(0,0,0,0.3);}
+    .input-footer{padding:10px 14px;border-top:1px solid var(--border-s);display:flex;align-items:center;gap:8px;flex-shrink:0;}
+    .char-count{font-family:var(--mono);font-size:10px;color:var(--text-3);flex:1;}
+    .drop-zone{margin:14px;border:1.5px dashed rgba(167,139,250,0.22);padding:24px 20px;text-align:center;cursor:pointer;transition:border-color 0.18s,background 0.18s;}
+    .drop-zone:hover,.drop-zone.drag-over{border-color:rgba(167,139,250,0.5);background:rgba(167,139,250,0.04);}
+    .drop-title{font-size:13px;font-weight:700;color:var(--text-1);margin-bottom:4px;}
+    .drop-hint{font-family:var(--mono);font-size:10px;color:var(--text-3);}
+    .hash-cards{display:flex;flex-direction:column;gap:10px;padding:14px;}
+    .hash-card{background:rgba(0,0,0,0.18);border:1px solid var(--border);border-radius:8px;padding:12px 14px;}
+    .hash-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+    .hash-label{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;}
+    .hash-copy{font-family:var(--mono);font-size:9px;font-weight:600;padding:2px 8px;cursor:pointer;border:1px solid var(--border);border-radius:4px;background:transparent;color:var(--text-3);transition:all 0.15s;}
+    .hash-copy:hover{color:var(--text-1);border-color:rgba(167,139,250,0.4);}
+    .hash-value{font-family:var(--mono);font-size:11px;color:var(--text-1);word-break:break-all;line-height:1.5;min-height:20px;color:var(--text-3);}
+    .hash-value.filled{color:var(--text-1);}
+    .output-footer{padding:8px 16px;border-top:1px solid var(--border-s);display:flex;align-items:center;gap:16px;flex-shrink:0;}
+    .output-stat{font-family:var(--mono);font-size:10px;color:var(--text-3);}
+    .output-stat .val{color:var(--text-2);}
+    .left-tabs{display:flex;border-bottom:1px solid var(--border-s);flex-shrink:0;}
+    .left-tab{font-family:var(--mono);font-size:11px;font-weight:500;padding:10px 18px;cursor:pointer;border:none;background:transparent;color:var(--text-3);border-bottom:2px solid transparent;transition:color 0.15s,border-color 0.15s;}
+    .left-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+    .tab-pane{display:none;flex-direction:column;flex:1;}
+    .tab-pane.active{display:flex;}
+    .stats-bar{font-family:var(--mono);font-size:10px;color:var(--free);padding:5px 16px;display:none;flex-shrink:0;animation:stats-in 0.25s ease-out;border-top:1px solid rgba(45,212,191,0.15);background:rgba(45,212,191,0.04);}
+    .stats-bar.visible{display:block;}
+    @keyframes stats-in{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:translateY(0)}}
+  </style>
+</head>
+<body>
+  <div class="bg-layer dot-grid" aria-hidden="true"><div class="blob blob-tool-1"></div><div class="blob blob-tool-2"></div><div class="blob blob-tool-3"></div></div>
+  <header class="header-tool"><div class="header-inner">
+    <a class="back-link" href="../index.html">&larr; All tools</a><div class="header-sep"></div>
+    <a href="../index.html"><img src="/assets/logo-horizontal.svg" alt="PrivBatch" height="32"></a>
+    <span class="tool-crumb"><span class="sep">/</span><span class="name">Hash Generator</span></span>
+    <div class="h-spacer"></div>
+    <div class="privacy-badge badge-inline"><div class="dot"></div>100% offline</div>
+    <input class="license-input" id="license-input" type="text" placeholder="&#128273; license key" aria-label="License key">
+    <span class="license-unlocked" aria-live="polite"></span>
+  </div></header>
+  <div class="tool-header"><div class="tool-header-inner">
+    <span class="tool-title">Hash Generator</span>
+    <div class="tool-header-spacer"></div>
+    <span class="tool-badge-free">Free tool &bull; No limits</span>
+  </div></div>
+  <div class="settings-bar">
+    <!-- GS buttons (Recent, Prove It, Shortcuts) injected by gold-standard.js -->
+  </div>
+  <div class="tool-layout" id="tool-layout">
+    <div class="glass-panel left-panel">
+      <div class="left-tabs">
+        <button class="left-tab active" id="tab-text">&#128203; Text</button>
+        <button class="left-tab" id="tab-file">&#128193; File</button>
+      </div>
+      <div class="tab-pane active" id="pane-text">
+        <textarea class="txt-area" id="text-input" placeholder="Type or paste text to hash…" spellcheck="false" aria-label="Text input"></textarea>
+        <div class="input-footer">
+          <span class="char-count" id="char-count">0 characters</span>
+          <button class="btn-secondary" id="btn-clear">Clear</button>
+        </div>
+      </div>
+      <div class="tab-pane" id="pane-file">
+        <div class="drop-zone" id="drop-zone" role="button" tabindex="0">
+          <div style="font-size:26px;opacity:0.5;margin-bottom:8px">&#8659;</div>
+          <div class="drop-title">Drop any file here</div>
+          <p class="drop-hint">or <button class="sbar-btn" id="browse-btn" style="display:inline;padding:3px 8px">browse</button></p>
+        </div>
+        <input type="file" id="file-input" style="display:none">
+        <div id="file-info" style="display:none;padding:12px 14px;font-family:var(--mono);font-size:11px;color:var(--text-2);border-top:1px solid var(--border-s)"></div>
+      </div>
+    </div>
+    <div class="panel-resizer" id="panel-resizer" aria-hidden="true"></div>
+    <div class="right-col">
+      <div class="glass-panel" style="display:flex;flex-direction:column;overflow:hidden;">
+        <div class="panel-header">
+          <span class="panel-title panel-title-accent">Hashes</span>
+          <div class="panel-spacer"></div>
+          <button class="panel-action" id="copy-all-btn">Copy All</button>
+          <button class="panel-action" id="download-btn">Download</button>
+        </div>
+        <div class="hash-cards" id="hash-cards">
+          <div class="hash-card"><div class="hash-card-header"><span class="hash-label">MD5</span><button class="hash-copy" data-algo="md5">Copy</button></div><div class="hash-value" id="hash-md5"> - </div></div>
+          <div class="hash-card"><div class="hash-card-header"><span class="hash-label">SHA-1</span><button class="hash-copy" data-algo="sha1">Copy</button></div><div class="hash-value" id="hash-sha1"> - </div></div>
+          <div class="hash-card"><div class="hash-card-header"><span class="hash-label">SHA-256</span><button class="hash-copy" data-algo="sha256">Copy</button></div><div class="hash-value" id="hash-sha256"> - </div></div>
+          <div class="hash-card"><div class="hash-card-header"><span class="hash-label">SHA-512</span><button class="hash-copy" data-algo="sha512">Copy</button></div><div class="hash-value" id="hash-sha512"> - </div></div>
+        </div>
+        <div class="output-footer">
+          <span class="output-stat">Input: <span class="val" id="stat-input"> - </span></span>
+          <span class="output-stat">Mode: <span class="val" id="stat-mode">text</span></span>
+        </div>
+      </div>
+      <div class="stats-bar" id="stats-bar" aria-live="polite"></div>
+    </div>
+  </div>
+  <footer class="footer-tool"><div class="footer-inner"><span>© 2026 PrivBatch</span><a href="../privacy.html">Privacy</a><a href="../changelog.html">Changelog</a><a href="../licence.html">Licence</a><span class="footer-note">All processing is local - zero uploads, zero logs</span></div></footer>
+  <!-- GS overlays (Prove It, Shortcuts, Switcher) injected by gold-standard.js -->
+  <script src="../js/license.js"></script>
+  <script>
+  (function(){
+    'use strict';
+    const $=id=>document.getElementById(id);
+
+    const DOM={
+      textInput:$('text-input'),charCount:$('char-count'),
+      statInput:$('stat-input'),statMode:$('stat-mode'),
+      statsBar:$('stats-bar'),
+      copyBtn:$('copy-all-btn'),downloadBtn:$('download-btn'),
+      outputBody:null,expandBtn:null,
+    };
+    const hashes={md5:'',sha1:'',sha256:'',sha512:''};
+    const state={lastOutput:'',mode:'text',inputSize:0};
+
+    function fmtSize(b){return b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(1)+' MB';}
+    function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+    function showStatsBar(ms,inB){DOM.statsBar.textContent=`Hashed in ${ms}ms · ${fmtSize(inB)} input · 0 bytes sent to any server`;DOM.statsBar.className='stats-bar visible';}
+
+    function computeHashes(wordArray, inB){
+      const t0=performance.now();
+      hashes.md5=CryptoJS.MD5(wordArray).toString();
+      hashes.sha1=CryptoJS.SHA1(wordArray).toString();
+      hashes.sha256=CryptoJS.SHA256(wordArray).toString();
+      hashes.sha512=CryptoJS.SHA512(wordArray).toString();
+      ['md5','sha1','sha256','sha512'].forEach(a=>{
+        const el=$('hash-'+a);el.textContent=hashes[a];el.classList.add('filled');
+      });
+      state.lastOutput=['MD5:    '+hashes.md5,'SHA-1:  '+hashes.sha1,'SHA-256:'+hashes.sha256,'SHA-512:'+hashes.sha512].join('\n');
+      showStatsBar(Math.round(performance.now()-t0),inB);
+    }
+
+    function hashText(text){
+      if(!text){clearHashes();return;}
+      state.inputSize=new Blob([text]).size;
+      DOM.statInput.textContent=fmtSize(state.inputSize);
+      DOM.statMode.textContent='text';
+      computeHashes(CryptoJS.enc.Utf8.parse(text), state.inputSize);
+      GoldStandard.History.save({tool:'Hash Generator',timestamp:Date.now(),inputSize:text.length,mode:'text'});
+    }
+
+    function clearHashes(){['md5','sha1','sha256','sha512'].forEach(a=>{const el=$('hash-'+a);el.textContent=' - ';el.classList.remove('filled');});state.lastOutput='';DOM.statInput.textContent=' - ';DOM.statsBar.className='stats-bar';}
+
+    function triggerClear(){DOM.textInput.value='';clearHashes();DOM.charCount.textContent='0 characters';DOM.textInput.focus();}
+
+    let debounce;
+    DOM.textInput.addEventListener('input',()=>{
+      const t=DOM.textInput.value;
+      DOM.charCount.textContent=t.length?t.length.toLocaleString()+' characters':'0 characters';
+      clearTimeout(debounce);debounce=setTimeout(()=>hashText(t),200);
+    });
+    $('btn-clear').addEventListener('click',triggerClear);
+
+    /* Tabs */
+    $('tab-text').addEventListener('click',()=>{$('tab-text').classList.add('active');$('tab-file').classList.remove('active');$('pane-text').classList.add('active');$('pane-file').classList.remove('active');DOM.statMode.textContent='text';});
+    $('tab-file').addEventListener('click',()=>{$('tab-file').classList.add('active');$('tab-text').classList.remove('active');$('pane-file').classList.add('active');$('pane-text').classList.remove('active');DOM.statMode.textContent='file';});
+
+    /* File handling */
+    $('browse-btn').addEventListener('click',e=>{e.stopPropagation();$('file-input').click();});
+    $('drop-zone').addEventListener('click',()=>$('file-input').click());
+    $('drop-zone').addEventListener('dragover',e=>{e.preventDefault();$('drop-zone').classList.add('drag-over');});
+    $('drop-zone').addEventListener('dragleave',()=>$('drop-zone').classList.remove('drag-over'));
+    $('drop-zone').addEventListener('drop',e=>{e.preventDefault();$('drop-zone').classList.remove('drag-over');if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);});
+    $('file-input').addEventListener('change',()=>{if($('file-input').files[0])loadFile($('file-input').files[0]);$('file-input').value='';});
+
+    function loadFile(file){
+      const info=$('file-info');
+      info.style.display='block';
+      info.textContent='Reading '+file.name+' ('+fmtSize(file.size)+')…';
+      const reader=new FileReader();
+      reader.onload=ev=>{
+        const arr=ev.target.result;
+        const wa=CryptoJS.lib.WordArray.create(arr);
+        state.inputSize=file.size;
+        DOM.statInput.textContent=file.name+' · '+fmtSize(file.size);
+        DOM.statMode.textContent='file';
+        info.textContent=file.name+' · '+fmtSize(file.size);
+        computeHashes(wa,file.size);
+        GoldStandard.History.save({tool:'Hash Generator',timestamp:Date.now(),inputSize:file.size,mode:'file'});
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    /* Copy per hash */
+    document.querySelectorAll('.hash-copy').forEach(btn=>{
+      btn.addEventListener('click',async()=>{
+        const algo=btn.dataset.algo;if(!hashes[algo])return;
+        try{await navigator.clipboard.writeText(hashes[algo]);btn.textContent='Copied!';btn.style.color='#2DD4BF';setTimeout(()=>{btn.textContent='Copy';btn.style.color='';},2000);}catch(_){}
+      });
+    });
+
+    /* Copy all */
+    DOM.copyBtn.addEventListener('click',async()=>{
+      if(!state.lastOutput)return;
+      try{await navigator.clipboard.writeText(state.lastOutput);DOM.copyBtn.textContent='Copied!';DOM.copyBtn.style.color='#2DD4BF';setTimeout(()=>{DOM.copyBtn.textContent='Copy All';DOM.copyBtn.style.color='';},2000);}catch(_){}
+    });
+
+    function downloadOutput(){
+      if(!state.lastOutput)return;
+      const blob=new Blob([state.lastOutput],{type:'text/plain'});
+      const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='hashes.txt';a.click();URL.revokeObjectURL(url);
+    }
+    DOM.downloadBtn.addEventListener('click',downloadOutput);
+
+    (function(){const r=$('panel-resizer'),l=$('tool-layout');if(!r||!l)return;let sx,sw,d=false;r.addEventListener('mousedown',e=>{sx=e.clientX;sw=parseInt(getComputedStyle(l).getPropertyValue('--left-w')||'420',10);d=true;document.body.style.cursor='col-resize';document.body.style.userSelect='none';});document.addEventListener('mousemove',e=>{if(!d)return;l.style.setProperty('--left-w',Math.min(700,Math.max(260,sw+e.clientX-sx))+'px');});document.addEventListener('mouseup',()=>{if(!d)return;d=false;document.body.style.cursor='';document.body.style.userSelect='';});})();
+    GoldStandard.init({
+      toolName : 'Hash Generator',
+      tier     : 'free',
+      onConvert : ()=>hashText(DOM.textInput.value),
+      onDownload: downloadOutput,
+      shortcuts: [
+        { keys: ['Ctrl', 'Enter'], desc: 'Convert / process' },
+        { keys: ['Ctrl', 'S'],     desc: 'Download output' },
+        { keys: ['Ctrl', 'K'],     desc: 'Open tool switcher' },
+        { keys: ['Escape'],        desc: 'Close overlay / clear' },
+        { keys: ['?'],             desc: 'Toggle shortcuts' },
+      ],
+    });
+  })();
+  </script>
+  <script src="../js/oss-page-chrome.js"></script>
+</body>
+</html>

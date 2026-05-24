@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/assets/icon-192.png">
+  <title>PrivBatch vs jwt.io - Privacy-first alternative</title>
+  <meta name="description" content="An honest comparison of PrivBatch's JWT Decoder and jwt.io. jwt.io is the de facto JWT tool with a library directory and handbook. PrivBatch decodes offline with 0 third-party scripts.">
+  <link rel="canonical" href="https://privbatch.com/vs-jwt-io.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/light-mode.css">
+  <style>
+    body { display: flex; flex-direction: column; min-height: 100vh; }
+
+    .vs-wrap { max-width: 880px; margin: 0 auto; padding: 48px 28px 80px; position: relative; z-index: 1; flex: 1; width: 100%; box-sizing: border-box; }
+    .vs-eyebrow { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+    .vs-title { font-size: 30px; font-weight: 800; letter-spacing: -0.6px; color: var(--text-1); margin-bottom: 10px; line-height: 1.2; }
+    .vs-tagline { font-size: 15px; color: var(--text-2); line-height: 1.6; margin-bottom: 44px; max-width: 640px; }
+    .vs-section { margin-bottom: 44px; }
+    .vs-section h2 { font-size: 18px; font-weight: 700; color: var(--text-1); margin-bottom: 14px; letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; }
+    .vs-section h2::before { content: ''; display: inline-block; width: 3px; height: 16px; background: var(--accent); border-radius: 2px; flex-shrink: 0; }
+    .vs-section p { font-size: 14px; color: var(--text-2); line-height: 1.75; margin-bottom: 10px; }
+
+    .vs-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; background: rgba(167,139,250,0.03); }
+    .vs-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .vs-table th { text-align: left; padding: 14px 16px; font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); border-bottom: 1px solid var(--border); background: rgba(167,139,250,0.04); }
+    .vs-table td { padding: 13px 16px; vertical-align: top; border-bottom: 1px solid var(--border-s); color: var(--text-2); line-height: 1.55; }
+    .vs-table tr:last-child td { border-bottom: none; }
+    .vs-table td:first-child { font-family: var(--mono); font-size: 11px; color: var(--text-1); font-weight: 600; letter-spacing: 0.02em; width: 30%; }
+
+    .vs-row-pb td { background: rgba(45,212,191,0.05); }
+    .vs-row-pb td:first-child { color: #2DD4BF; }
+    .vs-row-comp td { background: rgba(239,68,68,0.04); }
+    .vs-row-comp td:first-child { color: #EF4444; }
+    .vs-row-mixed td { background: rgba(245,158,11,0.04); }
+    .vs-row-mixed td:first-child { color: #F59E0B; }
+
+    .vs-tag { display: inline-block; font-family: var(--mono); font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.04em; text-transform: uppercase; margin-right: 6px; }
+    .vs-tag-pb { background: rgba(45,212,191,0.12); color: #2DD4BF; }
+    .vs-tag-comp { background: rgba(239,68,68,0.12); color: #EF4444; }
+    .vs-tag-mixed { background: rgba(245,158,11,0.12); color: #F59E0B; }
+
+    .vs-picks { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px; }
+    .vs-pick { border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; background: rgba(30,27,46,0.5); }
+    .vs-pick h3 { font-size: 13px; font-weight: 700; color: var(--text-1); margin-bottom: 10px; font-family: var(--mono); letter-spacing: 0.02em; }
+    .vs-pick p { font-size: 13px; color: var(--text-2); line-height: 1.7; margin: 0; }
+
+    @media (max-width: 720px) {
+      .vs-picks { grid-template-columns: 1fr; }
+      .vs-title { font-size: 24px; }
+      .vs-wrap { padding: 32px 20px 60px; }
+    }
+
+    .vs-cta { margin-top: 12px; padding: 28px 24px; border: 1px solid var(--border); border-radius: 12px; background: linear-gradient(180deg, rgba(167,139,250,0.06) 0%, rgba(167,139,250,0.02) 100%); text-align: center; }
+    .vs-cta p { font-size: 14px; color: var(--text-2); margin-bottom: 16px; }
+    .vs-cta-btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 22px; font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: 0.03em; color: #13111C; background: var(--accent); border-radius: 8px; text-decoration: none; transition: opacity 0.15s, transform 0.15s; }
+    .vs-cta-btn:hover { opacity: 0.92; transform: translateY(-1px); }
+
+    .vs-sources { margin-top: 36px; padding-top: 24px; border-top: 1px solid var(--border-s); font-size: 11px; color: var(--text-3); font-family: var(--mono); line-height: 1.7; }
+    .vs-sources a { color: var(--text-3); text-decoration: underline; text-decoration-color: var(--border); }
+    .vs-sources a:hover { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+  <div class="bg-layer dot-grid" aria-hidden="true">
+    <div class="blob blob-tool-1"></div>
+    <div class="blob blob-tool-2"></div>
+  </div>
+
+  <header class="header-tool">
+    <div class="header-inner">
+      <a class="back-link" href="index.html">&larr; All tools</a>
+      <div class="header-sep"></div>
+      <a href="/index.html">
+        <img src="/assets/logo-horizontal.svg" alt="PrivBatch" height="32">
+      </a>
+      <span class="tool-crumb" aria-label="Comparison page">
+        <span class="sep">/</span>
+        <span class="name">vs jwt.io</span>
+      </span>
+      <div class="h-spacer"></div>
+      <div class="privacy-badge badge-inline">
+        <div class="dot" aria-hidden="true"></div>
+        100% offline
+      </div>
+    </div>
+  </header>
+
+  <div class="vs-wrap">
+    <div class="vs-eyebrow">Honest comparison</div>
+    <h1 class="vs-title">PrivBatch vs jwt.io</h1>
+    <p class="vs-tagline">jwt.io has been the developer's JWT tool for a decade. It is also an Auth0 / Okta marketing surface. If you would rather decode tokens without loading their analytics, here is the alternative.</p>
+
+    <div class="vs-section">
+      <h2>What jwt.io does well</h2>
+      <p>jwt.io is the de facto JWT tool and has been for 7+ years. The interface is the one every backend developer learned on, the algorithm support is wide, signature verification works out of the box, and the libraries directory is genuinely the best place to find a JWT library in any language. The JWT Handbook is free and good.</p>
+      <p>The decoding itself happens in your browser - the secret and token never get POSTed anywhere by jwt.io's own code. That has been true for years and we are not going to pretend otherwise.</p>
+    </div>
+
+    <div class="vs-section">
+      <h2>What PrivBatch does differently</h2>
+      <p>jwt.io is run by Auth0, now part of Okta. The page loads Auth0 / Okta marketing tags, analytics, and a "Create a free account" CTA pointing at their identity product. The decoding is local but the surrounding page is a funnel.</p>
+      <p>PrivBatch's JWT Decoder loads zero third-party scripts, has no signup banner, and works fully offline after the first load. Same decoding, same algorithm support for the common cases (HS256, RS256, ES256), no upsell.</p>
+    </div>
+
+    <div class="vs-section">
+      <h2>Honest tradeoff table</h2>
+      <div class="vs-table-wrap">
+        <table class="vs-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>jwt.io</th>
+              <th>PrivBatch</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="vs-row-comp">
+              <td>Brand recognition</td>
+              <td>The JWT tool everyone learned on</td>
+              <td>New (2026)</td>
+            </tr>
+            <tr class="vs-row-comp">
+              <td>Libraries directory</td>
+              <td>Yes, curated across languages</td>
+              <td>No</td>
+            </tr>
+            <tr class="vs-row-comp">
+              <td>JWT Handbook (free)</td>
+              <td>Yes</td>
+              <td>No</td>
+            </tr>
+            <tr class="vs-row-comp">
+              <td>Algorithm coverage</td>
+              <td>Full set including ES384, PS256, EdDSA</td>
+              <td>Common set (HS256, RS256, ES256)</td>
+            </tr>
+            <tr class="vs-row-mixed">
+              <td>Decoding location</td>
+              <td>In-browser</td>
+              <td>In-browser</td>
+            </tr>
+            <tr class="vs-row-mixed">
+              <td>Free to use</td>
+              <td>Yes</td>
+              <td>Yes (Free tier)</td>
+            </tr>
+            <tr class="vs-row-pb">
+              <td>Owned by an identity vendor</td>
+              <td>Auth0 / Okta</td>
+              <td>Independent</td>
+            </tr>
+            <tr class="vs-row-pb">
+              <td>Third-party scripts on the page</td>
+              <td>Analytics + marketing tags</td>
+              <td>0</td>
+            </tr>
+            <tr class="vs-row-pb">
+              <td>Signup / upsell CTA</td>
+              <td>"Create a free Auth0 account"</td>
+              <td>None</td>
+            </tr>
+            <tr class="vs-row-pb">
+              <td>Prove-It network counter</td>
+              <td>No</td>
+              <td>Built-in toggle</td>
+            </tr>
+            <tr class="vs-row-pb">
+              <td>Works fully offline after first load</td>
+              <td>Partial (analytics calls)</td>
+              <td>Yes</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:14px; font-size:12px; color:var(--text-3);">
+        <span class="vs-tag vs-tag-pb">PrivBatch</span>
+        <span class="vs-tag vs-tag-mixed">Tie</span>
+        <span class="vs-tag vs-tag-comp">Competitor</span>
+      </p>
+    </div>
+
+    <div class="vs-section">
+      <h2>Pick the one that fits the job</h2>
+      <div class="vs-picks">
+        <div class="vs-pick">
+          <h3>Pick jwt.io if</h3>
+          <p>You need the long-tail algorithms (ES384, EdDSA, PS256), you want to verify a signature against a JWKS, or you are reaching for the libraries directory anyway. jwt.io is still the right answer for "I need every JWT algorithm in one place."</p>
+        </div>
+        <div class="vs-pick">
+          <h3>Pick PrivBatch if</h3>
+          <p>You are pasting a production access token to inspect the claims and you would rather not load Auth0's analytics in the process. Or you want one tool family for JWTs, JSON, base64, hashing, and 17 other dev tasks with the same keyboard shortcuts.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="vs-cta">
+      <p>Try the privacy-first version. 0 third-party scripts, 0 upsell.</p>
+      <a class="vs-cta-btn" href="/tools/jwt-decoder.html">Open JWT Decoder &rarr;</a>
+    </div>
+
+    <div class="vs-sources">
+      Research sources: <a href="https://jwt.io/">jwt.io</a> footer + page chrome (May 2026). Ownership and analytics observations from the public-facing site.
+    </div>
+  </div>
+
+  <footer class="footer-tool">
+    <div class="footer-inner">
+      <span>&copy; 2026 PrivBatch</span>
+      <a href="privacy.html">Privacy</a>
+      <a href="changelog.html">Changelog</a>
+      <a href="licence.html">Licence</a>
+      <span class="footer-note">All processing is local - zero uploads, zero logs</span>
+    </div>
+  </footer>
+
+  <script src="js/oss-page-chrome.js"></script>
+</body>
+</html>

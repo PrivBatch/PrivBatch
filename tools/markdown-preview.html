@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/assets/icon-192.png">
+  <title>Markdown Preview - Free, Private, Offline | PrivBatch</title>
+  <meta name="description" content="Live Markdown editor and preview. Export as HTML. Runs 100% in your browser - no uploads, no accounts.">
+  <link rel="canonical" href="https://privbatch.com/tools/markdown-preview.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/light-mode.css">
+  <script src="../js/config.js"></script>
+  <script src="../js/gold-standard.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+  <style>
+    body { display: flex; flex-direction: column; min-height: 100vh; box-sizing: border-box; }
+
+    .tool-header { position: relative; z-index: 1; background: var(--bg); border-bottom: 1px solid var(--border-s); flex-shrink: 0; }
+    .tool-header-inner { max-width: 1400px; margin: 0 auto; padding: 10px 24px; display: flex; align-items: center; gap: 16px; }
+    .tool-title { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; color: var(--text-1); }
+    .tool-header-spacer { flex: 1; }
+    .tool-badge-free { font-family: var(--mono); font-size: 9px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--free); display: flex; align-items: center; gap: 5px; }
+    .tool-badge-free::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--free); }
+
+    .settings-bar { position: relative; z-index: 96; background: rgba(22,19,34,0.98); border-bottom: 1px solid var(--border); padding: 0 24px; height: 44px; display: flex; align-items: center; gap: 16px; overflow: visible; flex-shrink: 0; }
+    .sbar-group { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+    .sbar-label { font-family: var(--mono); font-size: 10px; color: var(--text-3); white-space: nowrap; }
+    .sbar-sep { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
+    .sbar-btn { font-family: var(--mono); font-size: 10px; font-weight: 600; padding: 4px 10px; cursor: pointer; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-3); transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
+    .sbar-btn:hover { color: var(--text-1); border-color: rgba(167,139,250,0.4); }
+    .sbar-btn.active { background: rgba(167,139,250,0.15); color: var(--accent); border-color: rgba(167,139,250,0.4); }
+    .sbar-toggle { display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+    .sbar-mode-btn { font-family: var(--mono); font-size: 10px; font-weight: 600; padding: 4px 10px; cursor: pointer; border: none; background: transparent; color: var(--text-3); transition: background 0.15s, color 0.15s; white-space: nowrap; }
+    .sbar-mode-btn.active { background: rgba(167,139,250,0.15); color: var(--accent); }
+    .sbar-mode-sep { width: 1px; background: var(--border); }
+    .live-badge { font-family: var(--mono); font-size: 8px; font-weight: 600; text-transform: uppercase; color: var(--free); padding: 2px 5px; border: 1px solid rgba(45,212,191,0.3); border-radius: 4px; }
+
+    .tool-layout { display: grid; grid-template-columns: var(--left-w, 50%) 8px 1fr; max-width: 1400px; width: 100%; margin: 0 auto; padding: 12px 24px; box-sizing: border-box; gap: 0; align-items: stretch; position: relative; z-index: 1; }
+    .panel-resizer { display: flex; align-items: flex-start; justify-content: center; padding-top: 20px; cursor: col-resize; user-select: none; z-index: 10; }
+    .panel-resizer::after { content: ''; width: 2px; height: 32px; background: var(--border); border-radius: 1px; transition: background 0.15s; }
+    .panel-resizer:hover::after { background: rgba(167,139,250,0.4); }
+    .left-panel { display: flex; flex-direction: column; overflow: hidden; }
+    .right-col { display: flex; flex-direction: column; }
+    .output-panel { display: flex; flex-direction: column; overflow: hidden; }
+
+    .stats-bar { font-family: var(--mono); font-size: 10px; color: var(--free); padding: 5px 16px; display: none; flex-shrink: 0; animation: stats-in 0.25s ease-out; border-top: 1px solid rgba(45,212,191,0.15); background: rgba(45,212,191,0.04); }
+    .stats-bar.visible { display: block; }
+    @keyframes stats-in { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Markdown-specific */
+    .md-editor { flex: 1; resize: none; font-family: var(--mono); font-size: 13px; color: var(--text-1); background: transparent; border: none; outline: none; line-height: 1.7; padding: 16px; min-height: 300px; }
+    .md-editor::placeholder { color: var(--text-3); }
+
+    .input-footer { padding: 8px 12px; border-top: 1px solid var(--border-s); display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .input-btn { font-family: var(--mono); font-size: 10px; font-weight: 600; padding: 4px 10px; cursor: pointer; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-3); transition: all 0.15s; }
+    .input-btn:hover { color: var(--text-1); border-color: rgba(167,139,250,0.4); }
+    .input-spacer { flex: 1; }
+
+    .md-word-count { font-family: var(--mono); font-size: 10px; color: var(--text-3); }
+
+    .md-preview { flex: 1; overflow-y: auto; padding: 20px 24px; }
+    .md-preview::-webkit-scrollbar { width: 4px; }
+    .md-preview::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* Markdown rendered styles */
+    .md-preview h1, .md-preview h2, .md-preview h3, .md-preview h4 { color: var(--text-1); font-weight: 700; margin: 1.2em 0 0.5em; line-height: 1.3; }
+    .md-preview h1 { font-size: 24px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    .md-preview h2 { font-size: 20px; }
+    .md-preview h3 { font-size: 16px; }
+    .md-preview p { color: var(--text-2); line-height: 1.8; margin: 0.7em 0; font-size: 14px; }
+    .md-preview a { color: var(--accent); text-decoration: underline; }
+    .md-preview code { font-family: var(--mono); font-size: 12px; background: rgba(167,139,250,0.1); padding: 1px 5px; border-radius: 3px; color: var(--accent); }
+    .md-preview pre { background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; overflow-x: auto; margin: 12px 0; }
+    .md-preview pre code { background: none; padding: 0; color: var(--text-2); font-size: 12px; }
+    .md-preview blockquote { border-left: 3px solid var(--accent); padding: 8px 16px; margin: 12px 0; background: rgba(167,139,250,0.05); color: var(--text-3); font-style: italic; border-radius: 0 6px 6px 0; }
+    .md-preview ul, .md-preview ol { color: var(--text-2); padding-left: 24px; line-height: 1.8; font-size: 14px; }
+    .md-preview li { margin: 4px 0; }
+    .md-preview hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+    .md-preview table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 12px 0; }
+    .md-preview th { background: rgba(167,139,250,0.1); color: var(--text-1); padding: 8px 12px; border: 1px solid var(--border); font-weight: 600; text-align: left; }
+    .md-preview td { color: var(--text-2); padding: 7px 12px; border: 1px solid var(--border-s); }
+    .md-preview tr:nth-child(even) td { background: rgba(167,139,250,0.03); }
+    .md-preview img { max-width: 100%; border-radius: 6px; }
+    .md-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; gap: 10px; color: var(--text-3); font-family: var(--mono); font-size: 11px; }
+    .md-empty-icon { font-size: 32px; opacity: 0.25; }
+
+    .output-footer { padding: 8px 16px; border-top: 1px solid var(--border-s); display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+    .output-stat { font-family: var(--mono); font-size: 10px; color: var(--text-3); }
+  </style>
+</head>
+<body>
+
+  <div class="bg-layer dot-grid" aria-hidden="true">
+    <div class="blob blob-tool-1"></div>
+    <div class="blob blob-tool-2"></div>
+    <div class="blob blob-tool-3"></div>
+  </div>
+
+  <header class="header-tool">
+    <div class="header-inner">
+      <a class="back-link" href="../index.html">&larr; All tools</a>
+      <div class="header-sep"></div>
+      <a href="../index.html"><img src="/assets/logo-horizontal.svg" alt="PrivBatch" height="32"></a>
+      <span class="tool-crumb" aria-label="Current tool: Markdown Preview">
+        <span class="sep">/</span><span class="name">Markdown Preview</span>
+      </span>
+      <div class="h-spacer"></div>
+      <div class="privacy-badge badge-inline"><div class="dot" aria-hidden="true"></div>100% offline</div>
+      <input class="license-input" id="license-input" type="text" placeholder="&#128273; license key" aria-label="License key">
+      <span class="license-unlocked" aria-live="polite"></span>
+    </div>
+  </header>
+
+  <div class="tool-header">
+    <div class="tool-header-inner">
+      <span class="tool-title">Markdown Preview</span>
+      <div class="tool-header-spacer"></div>
+      <span class="tool-badge-live">Live preview</span>
+      <span class="tool-badge-free">Free tool · No limits</span>
+    </div>
+  </div>
+
+  <div class="settings-bar">
+    <div class="sbar-group">
+      <span class="live-badge">Live preview</span>
+    </div>
+    <div class="sbar-sep"></div>
+    <!-- GS buttons (Recent, Prove It, Shortcuts) injected by gold-standard.js -->
+  </div>
+
+  <div class="tool-layout" id="tool-layout">
+
+    <div class="glass-panel left-panel">
+      <div class="panel-header">
+        <span class="panel-title">Markdown Editor</span>
+        <div class="panel-spacer"></div>
+        <span class="md-word-count" id="word-count">0 words</span>
+      </div>
+      <textarea class="md-editor" id="md-editor"
+        placeholder="# Hello World&#10;&#10;Start typing **Markdown** here and see it rendered live on the right.&#10;&#10;- Supports **bold**, *italic*, `code`&#10;- Tables, blockquotes, links&#10;- Fenced code blocks&#10;&#10;> All processing happens locally in your browser."
+        spellcheck="false" autocomplete="off"></textarea>
+      <div class="input-footer">
+        <button class="input-btn" id="sample-btn">Sample</button>
+        <div class="input-spacer"></div>
+        <button class="input-btn" id="clear-btn">Clear</button>
+      </div>
+    </div>
+
+    <div class="panel-resizer" id="panel-resizer" aria-hidden="true"></div>
+
+    <div class="right-col">
+      <div class="glass-panel output-panel" id="output-panel">
+        <div class="panel-header">
+          <span class="panel-title panel-title-accent">Preview</span>
+          <div class="panel-spacer"></div>
+          <button class="panel-action" id="copy-btn">Copy HTML</button>
+          <button class="panel-action" id="download-btn">Export HTML</button>
+          <button class="panel-action" id="download-md-btn">Save .md</button>
+        </div>
+
+        <div class="md-preview" id="md-preview">
+          <div class="md-empty" id="md-empty">
+            <div class="md-empty-icon" aria-hidden="true">M↓</div>
+            Start typing to see the preview
+          </div>
+        </div>
+
+        <div class="output-footer">
+          <span class="output-stat" id="out-stat">Ready</span>
+        </div>
+      </div>
+
+      <div class="stats-bar" id="stats-bar" aria-live="polite"></div>
+    </div>
+
+  </div>
+
+  <footer class="footer-tool">
+    <div class="footer-inner">
+      <span>© 2026 PrivBatch</span>
+      <a href="../privacy.html">Privacy</a>
+      <a href="../changelog.html">Changelog</a>
+      <a href="../licence.html">Licence</a>
+      <span class="footer-note">All processing is local - zero uploads, zero logs</span>
+    </div>
+  </footer>
+
+  <!-- GS overlays (Prove It, Shortcuts, Switcher) injected by gold-standard.js -->
+
+  <script src="../js/license.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    const $ = id => document.getElementById(id);
+
+    const DOM = {
+      statsBar: $('stats-bar'), copyBtn: $('copy-btn'), downloadBtn: $('download-btn'),
+      editor: $('md-editor'), preview: $('md-preview'), mdEmpty: $('md-empty'),
+      wordCount: $('word-count'), outStat: $('out-stat'),
+    };
+
+    const state = { lastOutput: '', lastMd: '' };
+
+    function fmtSize(b) { if (b < 1024) return b + ' B'; if (b < 1048576) return (b/1024).toFixed(1)+' KB'; return (b/1048576).toFixed(1)+' MB'; }
+    function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function showStatsBar(ms, inB, outB) { DOM.statsBar.textContent = `Rendered in ${ms}ms · ${fmtSize(inB)} markdown → ${fmtSize(outB)} HTML · 0 bytes sent`; DOM.statsBar.className = 'stats-bar visible'; }
+
+    const SAMPLE = `# PrivBatch Markdown Preview
+
+Welcome to **Markdown Preview** - a free, offline tool for developers.
+
+## Features
+
+- **Live rendering** as you type
+- Full CommonMark support
+- Export to HTML or save as \`.md\`
+- Zero uploads, zero tracking
+
+## Code Example
+
+\`\`\`javascript
+const greet = name => \`Hello, \${name}!\`;
+console.log(greet('World'));
+\`\`\`
+
+## Blockquote
+
+> All processing happens **locally** in your browser. Your content never leaves your device.
+
+## Table
+
+| Tool | Type | Price |
+|------|------|-------|
+| JSON Formatter | Formatter | Free |
+| Hash Generator | Security | Free |
+| CSV ⇔ JSON | Converter | Pro |
+
+---
+
+*Made with PrivBatch - privacy-first developer tools.*`;
+
+    let renderTimer;
+    function renderPreview() {
+      clearTimeout(renderTimer);
+      renderTimer = setTimeout(() => {
+        const t0 = performance.now();
+        const md = DOM.editor.value;
+        state.lastMd = md;
+
+        const words = md.trim() ? md.trim().split(/\s+/).length : 0;
+        DOM.wordCount.textContent = words + ' word' + (words !== 1 ? 's' : '');
+
+        if (!md.trim()) {
+          DOM.mdEmpty.style.display = '';
+          DOM.preview.querySelectorAll(':not(#md-empty)').forEach(el => el.remove());
+          DOM.outStat.textContent = 'Ready';
+          DOM.statsBar.className = 'stats-bar';
+          state.lastOutput = '';
+          return;
+        }
+
+        DOM.mdEmpty.style.display = 'none';
+        const html = marked.parse(md, { breaks: true });
+        state.lastOutput = html;
+
+        /* Remove previous rendered content but keep md-empty */
+        Array.from(DOM.preview.children).forEach(el => { if (el.id !== 'md-empty') el.remove(); });
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        DOM.preview.appendChild(div);
+
+        const chars = md.length;
+        DOM.outStat.textContent = `${words} words · ${chars} chars · ${fmtSize(new Blob([html]).size)} HTML`;
+        GoldStandard.History.save({ tool: 'Markdown Preview', timestamp: Date.now(), inputSize: new Blob([md]).size });
+        showStatsBar(Math.round(performance.now() - t0), new Blob([md]).size, new Blob([html]).size);
+      }, 120);
+    }
+
+    function exportHTML() {
+      if (!state.lastOutput) return;
+      const full = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/assets/icon-192.png">
+<title>Exported from PrivBatch Markdown Preview</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 760px; margin: 40px auto; padding: 0 24px; color: #1f2937; line-height: 1.7; }
+h1,h2,h3,h4 { font-weight: 700; margin: 1.2em 0 0.5em; }
+code { background: #f3f4f6; padding: 1px 5px; border-radius: 3px; font-family: monospace; font-size: 0.9em; }
+pre { background: #1f2937; color: #f9fafb; padding: 16px; border-radius: 8px; overflow-x: auto; }
+pre code { background: none; padding: 0; color: inherit; }
+blockquote { border-left: 3px solid #a78bfa; padding: 8px 16px; margin: 12px 0; background: #f5f3ff; color: #6b7280; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 8px 12px; border: 1px solid #e5e7eb; text-align: left; }
+th { background: #f9fafb; font-weight: 600; }
+</style>
+</head>
+<body>
+${state.lastOutput}
+</body>
+</html>`;
+      const blob = new Blob([full], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'markdown-export.html'; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function saveMd() {
+      if (!state.lastMd) return;
+      const blob = new Blob([state.lastMd], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'document.md'; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    DOM.editor.addEventListener('input', renderPreview);
+    $('sample-btn').addEventListener('click', () => { DOM.editor.value = SAMPLE; renderPreview(); });
+    $('clear-btn').addEventListener('click', () => { DOM.editor.value = ''; renderPreview(); });
+    $('download-md-btn').addEventListener('click', saveMd);
+
+    DOM.copyBtn.addEventListener('click', async () => {
+      if (!state.lastOutput) return;
+      try {
+        await navigator.clipboard.writeText(state.lastOutput);
+        DOM.copyBtn.textContent = 'Copied!'; DOM.copyBtn.style.color = '#2DD4BF'; DOM.copyBtn.style.borderColor = 'rgba(45,212,191,0.4)';
+        setTimeout(() => { DOM.copyBtn.textContent = 'Copy HTML'; DOM.copyBtn.style.color = ''; DOM.copyBtn.style.borderColor = ''; }, 2000);
+      } catch (_) {}
+    });
+    DOM.downloadBtn.addEventListener('click', exportHTML);
+
+    (function () {
+      const resizer = $('panel-resizer'), layout = $('tool-layout');
+      let startX, startW, dragging = false;
+      resizer.addEventListener('mousedown', e => { startX = e.clientX; startW = parseInt(getComputedStyle(layout).getPropertyValue('--left-w') || '50', 10); dragging = true; document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; });
+      document.addEventListener('mousemove', e => {
+        if (!dragging) return;
+        const total = layout.offsetWidth;
+        const newW = Math.min(70, Math.max(30, ((startW / 100) * total + e.clientX - startX) / total * 100));
+        layout.style.setProperty('--left-w', newW + '%');
+      });
+      document.addEventListener('mouseup', () => { if (!dragging) return; dragging = false; document.body.style.cursor = ''; document.body.style.userSelect = ''; });
+    })();
+
+    GoldStandard.init({
+      toolName : 'Markdown Preview',
+      tier     : 'free',
+      onConvert : renderPreview,
+      onDownload: exportHTML,
+      shortcuts: [
+        { keys: ['Ctrl', 'Enter'], desc: 'Convert / process' },
+        { keys: ['Ctrl', 'S'],     desc: 'Download output' },
+        { keys: ['Ctrl', 'K'],     desc: 'Open tool switcher' },
+        { keys: ['Escape'],        desc: 'Close overlay / clear' },
+        { keys: ['?'],             desc: 'Toggle shortcuts' },
+      ],
+    });
+
+  })();
+  </script>
+  <script src="../js/oss-page-chrome.js"></script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+/* ── Containers ── */
+.container {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 28px;
+}
+
+.container-wide {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ── Fixed background layer (starfield + blobs) ── */
+.bg-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+/* Canvas starfield - homepage only */
+#starfield {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Dot grid - tool pages */
+.bg-layer.dot-grid::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(167,139,250,0.048) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* ── Blobs ── */
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(88px);
+}
+
+/* Homepage blobs - slow drift, no opacity on blob itself */
+.blob-home-1 {
+  width: 860px; height: 860px;
+  background: radial-gradient(circle, rgba(109,40,217,0.33) 0%, transparent 65%);
+  top: -330px; left: -190px;
+  animation: blob-d1 18s ease-in-out infinite alternate;
+}
+
+.blob-home-2 {
+  width: 620px; height: 620px;
+  background: radial-gradient(circle, rgba(167,139,250,0.20) 0%, transparent 65%);
+  bottom: -90px; right: -70px;
+  animation: blob-d2 22s ease-in-out infinite alternate;
+}
+
+.blob-home-3 {
+  width: 480px; height: 480px;
+  background: radial-gradient(circle, rgba(76,29,149,0.25) 0%, transparent 65%);
+  top: 36%; right: 16%;
+  animation: blob-d3 26s ease-in-out infinite alternate;
+}
+
+.blob-home-4 {
+  width: 340px; height: 340px;
+  background: radial-gradient(circle, rgba(139,92,246,0.18) 0%, transparent 65%);
+  top: 18%; left: 52%;
+  animation: blob-d4 20s ease-in-out infinite alternate;
+}
+
+/* Tool page blobs - oscillate, 0.28 opacity */
+.blob-tool-1 {
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, #6D28D9, transparent 70%);
+  top: -220px; left: -160px;
+  filter: blur(100px);
+  opacity: 0.28;
+  animation: blob-1 20s ease-in-out infinite;
+}
+
+.blob-tool-2 {
+  width: 450px; height: 450px;
+  background: radial-gradient(circle, #A78BFA, transparent 70%);
+  top: 30%; right: -120px;
+  filter: blur(100px);
+  opacity: 0.28;
+  animation: blob-2 24s ease-in-out infinite;
+}
+
+.blob-tool-3 {
+  width: 350px; height: 350px;
+  background: radial-gradient(circle, #4C1D95, transparent 70%);
+  bottom: -100px; left: 30%;
+  filter: blur(100px);
+  opacity: 0.28;
+  animation: blob-3 28s ease-in-out infinite;
+}
+
+/* ── Main page content wrapper ── */
+.page-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Responsive breakpoints ── */
+@media (max-width: 1000px) {
+  .tool-layout { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 960px) {
+  .tool-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+@media (max-width: 700px) {
+  /* pricing-chips shown on mobile - stacking handled in index.html */
+  .privacy-badge span { display: none !important; }
+}
+
+@media (max-width: 520px) {
+  /* Homepage privacy badge: hide entirely (not just text) */
+  .privacy-badge { display: none !important; }
+}
+
+@media (max-width: 600px) {
+  .modal-plans { grid-template-columns: 1fr !important; }
+  /* license-input width handled by two-row header at ≤520px */
+}
+
+@media (max-width: 480px) {
+  .tool-grid { grid-template-columns: 1fr !important; }
+}

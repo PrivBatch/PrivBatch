@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/assets/icon-192.png">
+  <title>PrivBatch vs base64encode.org - Privacy-first alternative</title>
+  <meta name="description" content="An honest comparison of PrivBatch's Base64 tool and base64encode.org. base64encode.org sends data to a server by default. PrivBatch encodes locally with 0 bytes transmitted.">
+  <link rel="canonical" href="https://privbatch.com/vs-base64encode.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/light-mode.css">
+  <style>
+    body { display: flex; flex-direction: column; min-height: 100vh; }
+
+    .vs-wrap { max-width: 880px; margin: 0 auto; padding: 48px 28px 80px; position: relative; z-index: 1; flex: 1; width: 100%; box-sizing: border-box; }
+    .vs-eyebrow { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+    .vs-title { font-size: 30px; font-weight: 800; letter-spacing: -0.6px; color: var(--text-1); margin-bottom: 10px; line-height: 1.2; }
+    .vs-tagline { font-size: 15px; color: var(--text-2); line-height: 1.6; margin-bottom: 44px; max-width: 640px; }
+    .vs-section { margin-bottom: 44px; }
+    .vs-section h2 { font-size: 18px; font-weight: 700; color: var(--text-1); margin-bottom: 14px; letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; }
+    .vs-section h2::before { content: ''; display: inline-block; width: 3px; height: 16px; background: var(--accent); border-radius: 2px; flex-shrink: 0; }
+    .vs-section p { font-size: 14px; color: var(--text-2); line-height: 1.75; margin-bottom: 10px; }
+
+    .vs-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; background: rgba(167,139,250,0.03); }
+    .vs-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .vs-table th { text-align: left; padding: 14px 16px; font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); border-bottom: 1px solid var(--border); background: rgba(167,139,250,0.04); }
+    .vs-table td { padding: 13px 16px; vertical-align: top; border-bottom: 1px solid var(--border-s); color: var(--text-2); line-height: 1.55; }
+    .vs-table tr:last-child td { border-bottom: none; }
+    .vs-table td:first-child { font-family: var(--mono); font-size: 11px; color: var(--text-1); font-weight: 600; letter-spacing: 0.02em; width: 30%; }
+
+    .vs-row-pb td { background: rgba(45,212,191,0.05); }
+    .vs-row-pb td:first-child { color: #2DD4BF; }
+    .vs-row-comp td { background: rgba(239,68,68,0.04); }
+    .vs-row-comp td:first-child { color: #EF4444; }
+    .vs-row-mixed td { background: rgba(245,158,11,0.04); }
+    .vs-row-mixed td:first-child { color: #F59E0B; }
+
+    .vs-tag { display: inline-block; font-family: var(--mono); font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.04em; text-transform: uppercase; margin-right: 6px; }
+    .vs-tag-pb { background: rgba(45,212,191,0.12); color: #2DD4BF; }
+    .vs-tag-comp { background: rgba(239,68,68,0.12); color: #EF4444; }
+    .vs-tag-mixed { background: rgba(245,158,11,0.12); color: #F59E0B; }
+
+    .vs-picks { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px; }
+    .vs-pick { border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; background: rgba(30,27,46,0.5); }
+    .vs-pick h3 { font-size: 13px; font-weight: 700; color: var(--text-1); margin-bottom: 10px; font-family: var(--mono); letter-spacing: 0.02em; }
+    .vs-pick p { font-size: 13px; color: var(--text-2); line-height: 1.7; margin: 0; }
+
+    @media (max-width: 720px) {
+      .vs-picks { grid-template-columns: 1fr; }
+      .vs-title { font-size: 24px; }
+      .vs-wrap { padding: 32px 20px 60px; }
+    }
+
+    .vs-cta { margin-top: 12px; padding: 28px 24px; border: 1px solid var(--border); border-radius: 12px; background: linear-gradient(180deg, rgba(167,139,250,0.06) 0%, rgba(167,139,250,0.02) 100%); text-align: center; }
+    .vs-cta p { font-size: 14px; color: var(--text-2); margin-bottom: 16px; }
+    .vs-cta-btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 22px; font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: 0.03em; color: #13111C; background: var(--accent); border-radius: 8px; text-decoration: none; transition: opacity 0.15s, transform 0.15s; }
+    .vs-cta-btn:hover { opacity: 0.92; transform: translateY(-1px); }
+
+    .vs-sources { margin-top: 36px; padding-top: 24px; border-top: 1px solid var(--border-s); font-size: 11px; color: var(--text-3); font-family: var(--mono); line-height: 1.7; }
+    .vs-sources a { color: var(--text-3); text-decoration: underline; text-decoration-color: var(--border); }
+    .vs-sources a:hover { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+  <div class="bg-layer dot-grid" aria-hidden="true">
+    <div class="blob blob-tool-1"></div>
+    <div class="blob blob-tool-2"></div>
+  </div>
+
+  <header class="header-tool">
+    <div class="header-inner">
+      <a class="back-link" href="index.html">&larr; All tools</a>
+      <div class="header-sep"></div>
+      <a href="/index.html">
+        <img src="/assets/logo-horizontal.svg" alt="PrivBatch" height="32">
+      </a>
+      <span class="tool-crumb" aria-label="Comparison page">
+        <span class="sep">/</span>
+        <span class="name">vs base64encode.org</span>
+      </span>
+      <div class="h-spacer"></div>
+      <div class="privacy-badge badge-inline">
+        <div class="dot" aria-hidden="true"></div>
+        100% offline
+      </div>
+    </div>
+  </header>
+
+  <div class="vs-wrap">
+    <div class="vs-eyebrow">Honest comparison</div>
+    <h1 class="vs-title">PrivBatch vs base64encode.org</h1>
+    <p class="vs-tagline">base64encode.org has a huge character-encoding catalogue and accepts files up to 100MB. The default encode path goes through their server. PrivBatch encodes everything locally, with 0 bytes transmitted.</p>
+
+    <div class="vs-section">
+      <h2>What base64encode.org does well</h2>
+      <p>The character-encoding coverage is genuinely impressive - UTF-8, every ISO-8859 variant, Big-5, CP850/866/932/936/950, GB18030, UCS-2/4, UTF-7/16/32. If you are working with legacy Asian or European text encodings, base64encode.org probably handles your edge case and PrivBatch probably does not. The 100MB file upload limit is also generous compared to most browser-only tools.</p>
+      <p>They are also transparent about the architecture: the default mode goes through their server over SSL, and they offer an opt-in "Live mode" that runs in the browser instead. That disclosure is in the FAQ, not buried.</p>
+    </div>
+
+    <div class="vs-section">
+      <h2>What PrivBatch does differently</h2>
+      <p>PrivBatch's Base64 tool is local by default - not opt-in, not "Live mode," just the only mode. The string you paste and the file you drop both stay in the tab. There is no server path because there is no server. The Prove It toggle confirms it: 0 network requests during encode or decode.</p>
+      <p>The tradeoff is honest. PrivBatch covers UTF-8 and ASCII out of the box - that is the 99% case for developers working with API tokens, image data URIs, JWTs, and config files. The legacy encodings are a deliberate gap.</p>
+    </div>
+
+    <div class="vs-section">
+      <h2>Honest tradeoff table</h2>
+      <div class="vs-table-wrap">
+        <table class="vs-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>base64encode.org</th>
+              <th>PrivBatch</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="vs-row-comp">
+              <td>Character encoding coverage</td>
+              <td>30+ encodings (UTF-8, ISO-8859, GB18030, Big-5, etc.)</td>
+              <td>UTF-8 + ASCII</td>
+            </tr>
+            <tr class="vs-row-comp">
+              <td>Max file size</td>
+              <td>100MB</td>
+              <td>Limited by browser memory (typically a few hundred MB)</td>
+            </tr>
+            <tr class="vs-row-comp">
+              <td>Brand age</td>
+              <td>15+ years, well-known result</td>
+              <td>Launched 2026</td>
+            </tr>
+            <tr class="vs-row-mixed">
+              <td>Free to use</td>
+              <td>Yes</td>
+              <td>Yes (Free tier)</td>
+            </tr>
+            <tr class="vs-row-mixed">
+              <td>SSL on transport</td>
+              <td>Yes</td>
+              <td>Yes (but nothing is transported)</td>
+            </tr>
+            <tr class="vs-row-pb">
+              <td>Default processing path</td>
+              <td>Server-side</td>
+              <td>Browser-side</td>
+            </tr>
+            <tr class="vs-row-pb">
+              <td>Data sent to server during encode</td>
+              <td>Yes (unless you find and enable Live mode)</td>
+              <td>0 bytes</td>
+            </tr>
+            <tr class="vs-row-pb">
+              <td>File upload path</td>
+              <td>Uploaded to their server</td>
+              <td>Read with FileReader, never leaves the tab</td>
+            </tr>
+            <tr class="vs-row-pb">
+              <td>Works fully offline</td>
+              <td>No (server-dependent by default)</td>
+              <td>Yes after first load</td>
+            </tr>
+            <tr class="vs-row-pb">
+              <td>Prove-It network counter</td>
+              <td>No</td>
+              <td>Built-in toggle</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:14px; font-size:12px; color:var(--text-3);">
+        <span class="vs-tag vs-tag-pb">PrivBatch</span>
+        <span class="vs-tag vs-tag-mixed">Tie</span>
+        <span class="vs-tag vs-tag-comp">Competitor</span>
+      </p>
+    </div>
+
+    <div class="vs-section">
+      <h2>Pick the one that fits the job</h2>
+      <div class="vs-picks">
+        <div class="vs-pick">
+          <h3>Pick base64encode.org if</h3>
+          <p>You need to encode text in GB18030, Big-5, EUC-JP, or one of the other 25+ legacy encodings, or you are encoding a non-sensitive file that comfortably fits their 100MB cap and you do not mind the server hop. Their encoding catalogue is hard to beat.</p>
+        </div>
+        <div class="vs-pick">
+          <h3>Pick PrivBatch if</h3>
+          <p>The string you are encoding is a secret (API token, certificate body, internal payload) or the file is anything you would not email to a stranger. UTF-8 covers the developer 99% case, and "0 bytes transmitted" is the default - not an opt-in toggle.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="vs-cta">
+      <p>Try the privacy-first version. 0 bytes transmitted, by default.</p>
+      <a class="vs-cta-btn" href="/tools/base64.html">Open Base64 &rarr;</a>
+    </div>
+
+    <div class="vs-sources">
+      Research sources: <a href="https://www.base64encode.org/">base64encode.org</a> homepage + FAQ (May 2026). Default-server-side and Live-mode opt-in claims quoted directly from the site's own description.
+    </div>
+  </div>
+
+  <footer class="footer-tool">
+    <div class="footer-inner">
+      <span>&copy; 2026 PrivBatch</span>
+      <a href="privacy.html">Privacy</a>
+      <a href="changelog.html">Changelog</a>
+      <a href="licence.html">Licence</a>
+      <span class="footer-note">All processing is local - zero uploads, zero logs</span>
+    </div>
+  </footer>
+
+  <script src="js/oss-page-chrome.js"></script>
+</body>
+</html>

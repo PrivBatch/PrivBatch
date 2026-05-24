@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/assets/icon-192.png">
+  <title>JSON Formatter &amp; Validator - Free, Private, Offline | PrivBatch</title>
+  <meta name="description" content="Format, prettify and validate JSON privately. Runs 100% in your browser - no uploads, no accounts, instant results.">
+  <link rel="canonical" href="https://privbatch.com/tools/json-formatter.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/light-mode.css">
+  <script src="../js/config.js"></script>
+  <script src="../js/gold-standard.js"></script>
+  <style>
+    /* ── Page chrome ── */
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+
+    /* ── Tool title bar ── */
+    .tool-header {
+      position: relative; z-index: 1;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border-s);
+      flex-shrink: 0;
+    }
+    .tool-header-inner {
+      max-width: 1400px; margin: 0 auto;
+      padding: 10px 24px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .tool-title {
+      font-size: 18px; font-weight: 800;
+      letter-spacing: -0.5px; color: var(--text-1);
+    }
+    .tool-title-and { color: var(--text-3); font-weight: 400; }
+    .tool-header-spacer { flex: 1; }
+    .tool-badge-free {
+      font-family: var(--mono); font-size: 9px; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--free); display: flex; align-items: center; gap: 5px;
+    }
+    .tool-badge-free::before {
+      content: ''; width: 4px; height: 4px; border-radius: 50%;
+      background: var(--free);
+    }
+
+    /* ── Settings bar ── */
+    .settings-bar {
+      position: relative; z-index: 96;
+      background: rgba(22,19,34,0.98);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px; height: 44px;
+      display: flex; align-items: center; gap: 16px;
+      overflow: visible; flex-shrink: 0;
+    }
+    .sbar-group  { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+    .sbar-label  { font-family: var(--mono); font-size: 10px; color: var(--text-3); white-space: nowrap; }
+    .sbar-sep    { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
+
+    .sbar-toggle { display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+    .sbar-mode-btn {
+      font-family: var(--mono); font-size: 10px; font-weight: 600;
+      padding: 4px 10px; cursor: pointer; border: none;
+      background: transparent; color: var(--text-3);
+      transition: background 0.15s, color 0.15s; white-space: nowrap;
+    }
+    .sbar-mode-btn.active { background: rgba(167,139,250,0.15); color: var(--accent); }
+    .sbar-mode-sep { width: 1px; background: var(--border); }
+
+    .sbar-select {
+      font-family: var(--mono); font-size: 10px;
+      background: rgba(167,139,250,0.06);
+      border: 1px solid var(--border); border-radius: 5px;
+      color: var(--text-1); padding: 3px 7px;
+      outline: none; cursor: pointer; transition: border-color 0.15s;
+    }
+    .sbar-select:focus { border-color: var(--accent); }
+
+    .sbar-pill {
+      width: 26px; height: 14px; background: var(--accent-d);
+      border-radius: 99px; position: relative; cursor: pointer; flex-shrink: 0;
+    }
+    .sbar-pill::after {
+      content: ''; position: absolute;
+      width: 10px; height: 10px; background: #fff; border-radius: 50%;
+      top: 2px; right: 2px; transition: all 0.18s;
+    }
+    .sbar-pill.off { background: var(--text-3); }
+    .sbar-pill.off::after { right: auto; left: 2px; }
+
+    /* ── Tool layout ── */
+    .tool-layout {
+      display: grid;
+      grid-template-columns: var(--left-w, 420px) 8px 1fr;
+      max-width: 1400px; width: 100%;
+      margin: 0 auto; padding: 12px 24px;
+      box-sizing: border-box; gap: 0;
+      align-items: stretch;
+      position: relative; z-index: 1;
+    }
+
+    /* ── Panel resizer ── */
+    .panel-resizer {
+      display: flex; align-items: flex-start;
+      justify-content: center; padding-top: 20px;
+      cursor: col-resize; user-select: none; z-index: 10;
+    }
+    .panel-resizer::after {
+      content: ''; width: 2px; height: 32px;
+      background: var(--border); border-radius: 1px;
+      transition: background 0.15s;
+    }
+    .panel-resizer:hover::after { background: var(--border-h, rgba(167,139,250,0.4)); }
+
+    /* ── Left panel ── */
+    .left-panel { display: flex; flex-direction: column; overflow: hidden; }
+
+    .left-tabs {
+      display: flex; border-bottom: 1px solid var(--border-s); flex-shrink: 0;
+    }
+    .left-tab {
+      font-family: var(--mono); font-size: 11px; font-weight: 500;
+      padding: 10px 18px; cursor: pointer; border: none;
+      background: transparent; color: var(--text-3);
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .left-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .left-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+    .left-tab-content { display: none; flex-direction: column; }
+    .left-tab-content.active { display: flex; flex: 1; min-height: 0; }
+
+    /* Paste pane */
+    .json-textarea {
+      width: 100%; flex: 1; min-height: 0; height: 0;
+      font-family: var(--mono); font-size: 12px; line-height: 1.65;
+      background: rgba(0,0,0,0.22); border: none;
+      border-bottom: 1px solid var(--border-s);
+      color: var(--text-1); padding: 14px 16px;
+      resize: none; outline: none; box-sizing: border-box;
+      transition: background 0.15s;
+    }
+    .json-textarea::placeholder { color: var(--text-3); }
+    .json-textarea:focus { background: rgba(0,0,0,0.3); }
+
+    .input-footer {
+      padding: 10px 14px;
+      border-top: 1px solid var(--border-s);
+      display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+    }
+    .char-count { font-family: var(--mono); font-size: 10px; color: var(--text-3); flex: 1; }
+
+    /* File pane */
+    .drop-zone {
+      margin: 14px;
+      border: 1.5px dashed rgba(167,139,250,0.22);
+      padding: 32px 20px; text-align: center;
+      cursor: pointer; transition: border-color 0.18s, background 0.18s;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: rgba(167,139,250,0.5);
+      background: rgba(167,139,250,0.04);
+    }
+    .drop-icon  { font-size: 28px; margin-bottom: 10px; opacity: 0.55; }
+    .drop-title { font-size: 14px; font-weight: 700; color: var(--text-1); margin-bottom: 4px; letter-spacing: -0.2px; }
+    .drop-hint  { font-family: var(--mono); font-size: 10px; color: var(--text-3); line-height: 1.6; }
+    .drop-hint .ext { color: var(--accent); opacity: 0.8; }
+    .drop-btn {
+      display: inline-block; margin-top: 12px;
+      font-family: var(--mono); font-size: 10px; font-weight: 600;
+      color: var(--accent); border: 1px solid rgba(167,139,250,0.28);
+      padding: 6px 14px; cursor: pointer; background: transparent;
+      transition: background 0.15s;
+    }
+    .drop-btn:hover { background: rgba(167,139,250,0.08); }
+
+    .loaded-file {
+      margin: 14px; padding: 12px 16px;
+      border: 1px solid var(--border);
+      background: rgba(167,139,250,0.04);
+      display: none; align-items: center; gap: 12px;
+    }
+    .loaded-file.visible { display: flex; }
+    .loaded-file-icon { font-size: 20px; opacity: 0.6; }
+    .loaded-file-meta { flex: 1; min-width: 0; }
+    .loaded-file-name {
+      font-family: var(--mono); font-size: 11px; color: var(--text-1);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .loaded-file-size { font-family: var(--mono); font-size: 9px; color: var(--text-3); margin-top: 2px; }
+    .loaded-file-remove {
+      font-family: var(--mono); font-size: 10px; color: var(--text-3);
+      background: none; border: none; cursor: pointer; transition: color 0.15s; flex-shrink: 0;
+    }
+    .loaded-file-remove:hover { color: var(--danger); }
+
+    /* ── Right column ── */
+    .right-col { display: flex; flex-direction: column; }
+
+    .output-panel { display: flex; flex-direction: column; overflow: hidden; }
+
+    /* Validation badge row */
+    .validation-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 16px; min-height: 36px;
+      border-bottom: 1px solid var(--border-s); flex-shrink: 0;
+    }
+    .badge-valid {
+      font-family: var(--mono); font-size: 10px; font-weight: 600;
+      color: var(--free); display: flex; align-items: center; gap: 6px;
+    }
+    .badge-valid::before { content: '✓'; }
+    .badge-invalid {
+      font-family: var(--mono); font-size: 10px; font-weight: 600;
+      color: var(--danger); display: flex; align-items: center; gap: 6px;
+    }
+    .badge-invalid::before { content: '✗'; }
+
+    /* Output body */
+    .output-body {
+      height: 300px; overflow-y: auto;
+      display: flex; flex-direction: column;
+    }
+
+    .output-empty {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 10px; color: var(--text-3);
+      font-family: var(--mono); font-size: 11px;
+    }
+    .output-empty-icon { font-size: 32px; opacity: 0.25; }
+
+    /* Error display */
+    .error-display { padding: 20px 16px; display: none; }
+    .error-display.visible { display: block; }
+    .error-msg {
+      font-family: var(--mono); font-size: 11px;
+      color: var(--danger); line-height: 1.6; white-space: pre-wrap;
+    }
+    .error-hint {
+      margin-top: 8px;
+      font-family: var(--mono); font-size: 10px;
+      color: rgba(248,113,113,0.55);
+    }
+
+    /* Code area */
+    .code-area {
+      padding: 16px;
+      font-family: var(--mono); font-size: 12px; line-height: 1.75;
+      overflow-x: auto; white-space: pre;
+      display: none;
+    }
+    .code-area.visible { display: block; }
+
+    /* Syntax tokens */
+    .tok-key  { color: #C4B5FD; }
+    .tok-str  { color: #86EFAC; }
+    .tok-num  { color: #FCA5A5; }
+    .tok-bool { color: #FCD34D; }
+    .tok-null { color: #FCD34D; }
+    .tok-punc { color: var(--text-3); }
+    .tok-ln   {
+      color: var(--text-3); user-select: none;
+      margin-right: 16px; display: inline-block;
+      min-width: 24px; text-align: right;
+    }
+
+    /* Output footer */
+    .output-footer {
+      padding: 8px 16px;
+      border-top: 1px solid var(--border-s);
+      display: flex; align-items: center; gap: 16px; flex-shrink: 0;
+    }
+    .output-stat { font-family: var(--mono); font-size: 10px; color: var(--text-3); }
+    .output-stat .val { color: var(--text-2); }
+
+    /* Processing stats bar */
+    .stats-bar {
+      font-family: var(--mono); font-size: 10px;
+      color: var(--free); padding: 5px 16px;
+      display: none; flex-shrink: 0;
+      animation: stats-in 0.25s ease-out;
+      border-top: 1px solid rgba(45,212,191,0.15);
+      background: rgba(45,212,191,0.04);
+    }
+    .stats-bar.visible { display: block; }
+    @keyframes stats-in {
+      from { opacity: 0; transform: translateY(-3px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Focus styles for keyboard-first navigation */
+    button:focus-visible, select:focus-visible, input:focus-visible {
+      outline: 2px solid var(--accent); outline-offset: 2px;
+    }
+
+    /* Responsive */
+    @media (max-width: 1000px) {
+      .tool-layout {
+        grid-template-columns: 1fr !important;
+        padding: 8px 16px;
+      }
+      .panel-resizer { display: none; }
+      .right-col { margin-top: 8px; }
+      .gs-switcher { min-width: min(420px, 90vw); }
+    }
+    @media (max-width: 480px) {
+      .gs-modal { min-width: 0; width: 94vw; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background -->
+  <div class="bg-layer dot-grid" aria-hidden="true">
+    <div class="blob blob-tool-1"></div>
+    <div class="blob blob-tool-2"></div>
+    <div class="blob blob-tool-3"></div>
+  </div>
+
+  <!-- Nav header -->
+  <header class="header-tool">
+    <div class="header-inner">
+      <a class="back-link" href="../index.html">&larr; All tools</a>
+      <div class="header-sep"></div>
+      <a href="../index.html">
+        <img src="/assets/logo-horizontal.svg" alt="PrivBatch" height="32">
+      </a>
+      <span class="tool-crumb" aria-label="Current tool: JSON Formatter">
+        <span class="sep">/</span>
+        <span class="name">JSON Formatter</span>
+      </span>
+      <div class="h-spacer"></div>
+      <div class="privacy-badge badge-inline">
+        <div class="dot" aria-hidden="true"></div>
+        100% offline
+      </div>
+      <input class="license-input" id="license-input" type="text"
+             placeholder="&#128273; license key" aria-label="License key">
+      <span class="license-unlocked" aria-live="polite"></span>
+    </div>
+  </header>
+
+  <!-- Tool title bar -->
+  <div class="tool-header">
+    <div class="tool-header-inner">
+      <span class="tool-title">
+        JSON Formatter <span class="tool-title-and">&amp;</span> Validator
+      </span>
+      <div class="tool-header-spacer"></div>
+      <span class="tool-badge-live">Live preview</span>
+      <span class="tool-badge-free">Free tool</span>
+    </div>
+  </div>
+
+  <!-- Options toolbar -->
+  <div class="settings-bar">
+    <div class="sbar-group">
+      <span class="sbar-label">Mode:</span>
+      <div class="sbar-toggle">
+        <button class="sbar-mode-btn active" id="mode-format">Format</button>
+        <div class="sbar-mode-sep"></div>
+        <button class="sbar-mode-btn" id="mode-minify">Minify</button>
+        <div class="sbar-mode-sep"></div>
+        <button class="sbar-mode-btn" id="mode-validate">Validate only</button>
+      </div>
+    </div>
+    <div class="sbar-sep"></div>
+    <div class="sbar-group" id="indent-group">
+      <span class="sbar-label">Indent:</span>
+      <select class="sbar-select" id="indent-select">
+        <option value="2">2 spaces</option>
+        <option value="4">4 spaces</option>
+        <option value="tab">Tab</option>
+      </select>
+    </div>
+    <div class="sbar-sep" id="indent-sep"></div>
+    <div class="sbar-group">
+      <span class="sbar-label">Sort keys</span>
+      <div class="sbar-pill off" id="tog-sort"
+           role="switch" aria-checked="false" tabindex="0"
+           aria-label="Sort keys alphabetically"></div>
+    </div>
+    <!-- GS buttons injected by gold-standard.js -->
+  </div>
+
+  <!-- Split layout -->
+  <div class="tool-layout" id="tool-layout">
+
+    <!-- ═══ LEFT PANEL ═══ -->
+    <div class="glass-panel left-panel">
+
+      <div class="left-tabs" role="tablist">
+        <button class="left-tab active" id="tab-paste" role="tab"
+                aria-selected="true" aria-controls="pane-paste">&#128203; Paste</button>
+        <button class="left-tab" id="tab-file" role="tab"
+                aria-selected="false" aria-controls="pane-file">&#128193; File</button>
+        <button class="left-tab" id="tab-sample" role="tab"
+                aria-selected="false">&#9889; Sample</button>
+      </div>
+
+      <!-- Paste pane -->
+      <div class="left-tab-content active" id="pane-paste"
+           role="tabpanel" aria-labelledby="tab-paste">
+        <textarea class="json-textarea" id="json-input"
+          placeholder="Paste JSON here - output updates instantly… (Ctrl+Enter to process)"
+          spellcheck="false" autocomplete="off"
+          aria-label="JSON input"></textarea>
+        <div class="input-footer">
+          <span class="char-count" id="char-count">0 characters</span>
+          <button class="btn-secondary" id="clear-btn">Clear</button>
+        </div>
+      </div>
+
+      <!-- File pane -->
+      <div class="left-tab-content" id="pane-file"
+           role="tabpanel" aria-labelledby="tab-file">
+        <div class="drop-zone" id="drop-zone" role="button"
+             tabindex="0" aria-label="Drop JSON file or click to browse">
+          <div class="drop-icon" aria-hidden="true">&#8659;</div>
+          <div class="drop-title">Drop a JSON file here</div>
+          <p class="drop-hint">or browse - accepts <span class="ext">.json</span> files</p>
+          <button class="drop-btn" id="browse-btn" type="button">Browse file</button>
+        </div>
+        <div class="loaded-file" id="loaded-file">
+          <div class="loaded-file-icon" aria-hidden="true">&#128196;</div>
+          <div class="loaded-file-meta">
+            <div class="loaded-file-name" id="loaded-name"> - </div>
+            <div class="loaded-file-size" id="loaded-size"> - </div>
+          </div>
+          <button class="loaded-file-remove" id="loaded-remove"
+                  aria-label="Remove file">&#10005; Remove</button>
+        </div>
+        <input type="file" id="file-input" accept=".json"
+               style="display:none" aria-hidden="true">
+      </div>
+
+    </div><!-- /left-panel -->
+
+    <!-- ═══ RESIZER ═══ -->
+    <div class="panel-resizer" id="panel-resizer" aria-hidden="true"></div>
+
+    <!-- ═══ RIGHT PANEL ═══ -->
+    <div class="right-col">
+      <div class="glass-panel output-panel" id="output-panel">
+
+        <div class="panel-header">
+          <span class="panel-title panel-title-accent">Output</span>
+          <div class="panel-spacer"></div>
+          <button class="panel-action" id="copy-btn"
+                  aria-label="Copy output to clipboard">Copy</button>
+          <button class="panel-action" id="download-btn"
+                  aria-label="Download output as JSON file">Download</button>
+          <button class="panel-action" id="expand-btn"
+                  aria-label="Expand output panel">Expand &#8597;</button>
+        </div>
+
+        <!-- Validation indicator -->
+        <div class="validation-row" id="validation-row" aria-live="polite"></div>
+
+        <!-- Output body -->
+        <div class="output-body" id="output-body">
+          <div class="output-empty" id="output-empty">
+            <div class="output-empty-icon" aria-hidden="true">{ }</div>
+            Paste or load JSON to see output
+          </div>
+          <div class="error-display" id="error-display" role="alert"></div>
+          <div class="code-area" id="code-area"
+               aria-label="Formatted JSON output"></div>
+        </div>
+
+        <div class="output-footer">
+          <span class="output-stat">
+            Top-level: <span class="val" id="stat-top"> - </span>
+          </span>
+          <span class="output-stat">
+            Size: <span class="val" id="stat-size"> - </span>
+          </span>
+        </div>
+
+      </div>
+
+      <!-- Processing stats bar -->
+      <div class="stats-bar" id="stats-bar" aria-live="polite"></div>
+
+    </div><!-- /right-col -->
+
+  </div><!-- /tool-layout -->
+
+  <!-- Footer -->
+  <footer class="footer-tool">
+    <div class="footer-inner">
+      <span>© 2026 PrivBatch</span>
+      <a href="../privacy.html">Privacy</a>
+      <a href="../changelog.html">Changelog</a>
+      <a href="../licence.html">Licence</a>
+      <span class="footer-note">All processing is local - zero uploads, zero logs</span>
+    </div>
+  </footer>
+
+  <!-- GS overlays injected by gold-standard.js -->
+
+  <script src="../js/license.js"></script>
+  <script>
+  (function () {
+    'use strict';
+
+    const $ = id => document.getElementById(id);
+
+    /* ════════ DOM ════════ */
+    const DOM = {
+      jsonInput:     $('json-input'),
+      charCount:     $('char-count'),
+      clearBtn:      $('clear-btn'),
+      tabPaste:      $('tab-paste'),
+      tabFile:       $('tab-file'),
+      tabSample:     $('tab-sample'),
+      panePaste:     $('pane-paste'),
+      paneFile:      $('pane-file'),
+      dropZone:      $('drop-zone'),
+      browseBtn:     $('browse-btn'),
+      fileInput:     $('file-input'),
+      loadedFile:    $('loaded-file'),
+      loadedName:    $('loaded-name'),
+      loadedSize:    $('loaded-size'),
+      loadedRemove:  $('loaded-remove'),
+      modeFormat:    $('mode-format'),
+      modeMinify:    $('mode-minify'),
+      modeValidate:  $('mode-validate'),
+      indentGroup:   $('indent-group'),
+      indentSep:     $('indent-sep'),
+      indentSelect:  $('indent-select'),
+      togSort:       $('tog-sort'),
+      validationRow: $('validation-row'),
+      outputBody:    $('output-body'),
+      outputEmpty:   $('output-empty'),
+      errorDisplay:  $('error-display'),
+      codeArea:      $('code-area'),
+      copyBtn:       $('copy-btn'),
+      downloadBtn:   $('download-btn'),
+      expandBtn:     $('expand-btn'),
+      statTop:       $('stat-top'),
+      statSize:      $('stat-size'),
+      layout:        $('tool-layout'),
+      statsBar:      $('stats-bar'),
+    };
+
+    /* ════════ STATE ════════ */
+    const state = {
+      raw:        '',
+      mode:       'format',
+      indent:     2,
+      sortKeys:   false,
+      expanded:   false,
+      lastOutput: '',
+    };
+
+    /* ════════ UTILS ════════ */
+    function fmtSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    function esc(s) {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function getErrorPos(text, e) {
+      const ff = e.message.match(/line (\d+) col(?:umn)?\s*(\d+)/i);
+      if (ff) return { line: +ff[1], col: +ff[2] };
+      const cm = e.message.match(/position (\d+)/);
+      if (cm) {
+        const idx = +cm[1];
+        const before = text.slice(0, idx);
+        const line = (before.match(/\n/g) || []).length + 1;
+        const col  = idx - before.lastIndexOf('\n');
+        return { line, col };
+      }
+      return null;
+    }
+
+    function sortObjKeys(obj) {
+      if (Array.isArray(obj)) return obj.map(sortObjKeys);
+      if (obj !== null && typeof obj === 'object') {
+        return Object.keys(obj).sort().reduce((acc, k) => {
+          acc[k] = sortObjKeys(obj[k]);
+          return acc;
+        }, {});
+      }
+      return obj;
+    }
+
+    function topLevelLabel(parsed) {
+      if (Array.isArray(parsed))                         return parsed.length + ' items';
+      if (parsed !== null && typeof parsed === 'object') return Object.keys(parsed).length + ' keys';
+      return 'scalar';
+    }
+
+    /* ════════ SYNTAX HIGHLIGHTING ════════ */
+    function highlightJSON(src) {
+      let out = '', i = 0, lineNo = 1;
+      const len = src.length;
+      out += `<span class="tok-ln">${lineNo}</span>`;
+      while (i < len) {
+        const ch = src[i];
+        if (ch === '\n') {
+          out += '\n'; lineNo++; i++;
+          if (i < len) out += `<span class="tok-ln">${lineNo}</span>`;
+          continue;
+        }
+        if (ch === '"') {
+          let s = '"', j = i + 1;
+          while (j < len) {
+            if (src[j] === '\\') { s += src[j] + (src[j + 1] || ''); j += 2; continue; }
+            if (src[j] === '"')  { s += '"'; j++; break; }
+            s += src[j++];
+          }
+          i = j;
+          let k = j;
+          while (k < len && (src[k] === ' ' || src[k] === '\t')) k++;
+          const cls = src[k] === ':' ? 'tok-key' : 'tok-str';
+          out += `<span class="${cls}">${esc(s)}</span>`;
+          continue;
+        }
+        if (ch === 't' && src.startsWith('true',  i)) { out += '<span class="tok-bool">true</span>';  i += 4; continue; }
+        if (ch === 'f' && src.startsWith('false', i)) { out += '<span class="tok-bool">false</span>'; i += 5; continue; }
+        if (ch === 'n' && src.startsWith('null',  i)) { out += '<span class="tok-null">null</span>';  i += 4; continue; }
+        if (ch === '-' || (ch >= '0' && ch <= '9')) {
+          let s = ch, j = i + 1;
+          while (j < len && /[\d.eE+\-]/.test(src[j])) s += src[j++];
+          out += `<span class="tok-num">${esc(s)}</span>`;
+          i = j; continue;
+        }
+        if ('{}[]:,'.includes(ch)) {
+          out += `<span class="tok-punc">${esc(ch)}</span>`;
+          i++; continue;
+        }
+        out += esc(ch); i++;
+      }
+      return out;
+    }
+
+    /* ════════ STATS BAR ════════ */
+    const showStatsBar = (ms, inBytes, outBytes) =>
+      GoldStandard.showStatsBar(DOM.statsBar, ms, inBytes, outBytes);
+
+    /* ════════ PROCESS ════════ */
+    function process(text) {
+      const t0 = performance.now();
+      state.raw = text;
+      DOM.charCount.textContent = text.length === 0
+        ? '0 characters'
+        : text.length.toLocaleString() + ' characters';
+
+      if (!text.trim()) {
+        renderEmpty();
+        DOM.statsBar.className = 'stats-bar';
+        return;
+      }
+
+      let parsed;
+      try {
+        parsed = JSON.parse(text);
+      } catch (e) {
+        renderError(text, e);
+        DOM.statsBar.className = 'stats-bar';
+        return;
+      }
+
+      renderValid();
+
+      const inBytes = new Blob([text]).size;
+
+      if (state.mode === 'validate') {
+        DOM.outputEmpty.innerHTML =
+          '<div class="output-empty-icon" style="opacity:1;font-size:28px">✓</div>' +
+          'Valid JSON - no output in Validate mode';
+        DOM.outputEmpty.style.color = 'var(--free)';
+        DOM.outputEmpty.style.display = 'flex';
+        DOM.errorDisplay.className = 'error-display';
+        DOM.codeArea.className = 'code-area';
+        DOM.statTop.textContent  = topLevelLabel(parsed);
+        DOM.statSize.textContent = fmtSize(inBytes);
+        state.lastOutput = '';
+        showStatsBar(Math.round(performance.now() - t0), inBytes, 0);
+        return;
+      }
+
+      let data   = state.sortKeys ? sortObjKeys(parsed) : parsed;
+      let output = state.mode === 'minify'
+        ? JSON.stringify(data)
+        : JSON.stringify(data, null, state.indent === 'tab' ? '\t' : state.indent);
+
+      state.lastOutput = output;
+
+      DOM.outputEmpty.style.display = 'none';
+      DOM.errorDisplay.className = 'error-display';
+      DOM.codeArea.innerHTML = highlightJSON(output);
+      DOM.codeArea.className = 'code-area visible';
+
+      DOM.statTop.textContent  = topLevelLabel(parsed);
+      DOM.statSize.textContent = fmtSize(new Blob([output]).size);
+
+      const outBytes = new Blob([output]).size;
+      showStatsBar(Math.round(performance.now() - t0), inBytes, outBytes);
+    }
+
+    function renderEmpty() {
+      DOM.validationRow.innerHTML = '';
+      DOM.outputEmpty.innerHTML =
+        '<div class="output-empty-icon" aria-hidden="true">{ }</div>' +
+        'Paste or load JSON to see output';
+      DOM.outputEmpty.style.color  = '';
+      DOM.outputEmpty.style.display = 'flex';
+      DOM.errorDisplay.className = 'error-display';
+      DOM.codeArea.className = 'code-area';
+      DOM.statTop.textContent  = ' - ';
+      DOM.statSize.textContent = ' - ';
+      state.lastOutput = '';
+    }
+
+    function renderValid() {
+      DOM.validationRow.innerHTML = '<span class="badge-valid">Valid JSON</span>';
+    }
+
+    function renderError(text, e) {
+      const pos = getErrorPos(text, e);
+      DOM.validationRow.innerHTML = pos
+        ? `<span class="badge-invalid">Invalid JSON - line ${pos.line}, col ${pos.col}</span>`
+        : '<span class="badge-invalid">Invalid JSON</span>';
+      DOM.outputEmpty.style.display = 'none';
+      DOM.codeArea.className = 'code-area';
+      const clean = e.message.replace(/^JSON\.parse:\s*/i, '');
+      DOM.errorDisplay.innerHTML =
+        `<div class="error-msg">${esc(clean)}</div>` +
+        (pos ? `<div class="error-hint">↳ line ${pos.line}, column ${pos.col}</div>` : '');
+      DOM.errorDisplay.className = 'error-display visible';
+      DOM.statTop.textContent  = ' - ';
+      DOM.statSize.textContent = ' - ';
+      state.lastOutput = '';
+    }
+
+    function reprocess() { process(state.raw); }
+
+    /* ════════ TOOLBAR ════════ */
+    function setMode(mode) {
+      state.mode = mode;
+      DOM.modeFormat.classList.toggle('active', mode === 'format');
+      DOM.modeMinify.classList.toggle('active', mode === 'minify');
+      DOM.modeValidate.classList.toggle('active', mode === 'validate');
+      const showIndent = mode === 'format';
+      DOM.indentGroup.style.display = showIndent ? '' : 'none';
+      DOM.indentSep.style.display   = showIndent ? '' : 'none';
+      reprocess();
+    }
+
+    DOM.modeFormat.addEventListener('click',   () => setMode('format'));
+    DOM.modeMinify.addEventListener('click',   () => setMode('minify'));
+    DOM.modeValidate.addEventListener('click', () => setMode('validate'));
+
+    DOM.indentSelect.addEventListener('change', () => {
+      state.indent = DOM.indentSelect.value === 'tab' ? 'tab' : +DOM.indentSelect.value;
+      reprocess();
+    });
+
+    function toggleSort() {
+      state.sortKeys = !state.sortKeys;
+      DOM.togSort.classList.toggle('off', !state.sortKeys);
+      DOM.togSort.setAttribute('aria-checked', String(state.sortKeys));
+      reprocess();
+    }
+    DOM.togSort.addEventListener('click', toggleSort);
+    DOM.togSort.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSort(); }
+    });
+
+    /* ════════ INPUT ════════ */
+    let debounceTimer;
+    DOM.jsonInput.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => process(DOM.jsonInput.value), 120);
+    });
+
+    DOM.clearBtn.addEventListener('click', () => {
+      DOM.jsonInput.value = '';
+      process('');
+      DOM.jsonInput.focus();
+    });
+
+    /* ════════ TABS ════════ */
+    function switchPane(tabId, paneId) {
+      ['tab-paste', 'tab-file', 'tab-sample'].forEach(id => {
+        const t = $(id);
+        if (t) { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); }
+      });
+      document.querySelectorAll('.left-tab-content').forEach(p => p.classList.remove('active'));
+      const tab  = $(tabId);  if (tab)  { tab.classList.add('active');  tab.setAttribute('aria-selected', 'true'); }
+      const pane = $(paneId); if (pane) pane.classList.add('active');
+    }
+
+    DOM.tabPaste.addEventListener('click', () => switchPane('tab-paste', 'pane-paste'));
+    DOM.tabFile.addEventListener('click',  () => switchPane('tab-file',  'pane-file'));
+    DOM.tabSample.addEventListener('click', () => {
+      DOM.jsonInput.value = SAMPLE_JSON;
+      switchPane('tab-paste', 'pane-paste');
+      process(SAMPLE_JSON);
+    });
+
+    /* ════════ FILE HANDLING ════════ */
+    DOM.browseBtn.addEventListener('click', e => { e.stopPropagation(); DOM.fileInput.click(); });
+    DOM.dropZone.addEventListener('click', () => DOM.fileInput.click());
+    DOM.dropZone.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); DOM.fileInput.click(); }
+    });
+    DOM.dropZone.addEventListener('dragover',  e => { e.preventDefault(); DOM.dropZone.classList.add('drag-over'); });
+    DOM.dropZone.addEventListener('dragleave', () => DOM.dropZone.classList.remove('drag-over'));
+    DOM.dropZone.addEventListener('drop', e => {
+      e.preventDefault(); DOM.dropZone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file) loadFile(file);
+    });
+    DOM.fileInput.addEventListener('change', () => {
+      if (DOM.fileInput.files[0]) loadFile(DOM.fileInput.files[0]);
+      DOM.fileInput.value = '';
+    });
+    DOM.loadedRemove.addEventListener('click', () => {
+      DOM.loadedFile.classList.remove('visible');
+      DOM.dropZone.style.display = '';
+      DOM.jsonInput.value = '';
+      process('');
+      switchPane('tab-file', 'pane-file');
+    });
+
+    function loadFile(file) {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const text = ev.target.result;
+        DOM.jsonInput.value = text;
+        DOM.loadedName.textContent = file.name;
+        DOM.loadedSize.textContent = fmtSize(file.size);
+        DOM.loadedFile.classList.add('visible');
+        DOM.dropZone.style.display = 'none';
+        switchPane('tab-paste', 'pane-paste');
+        process(text);
+      };
+      reader.readAsText(file);
+    }
+
+    /* ════════ COPY (with green flash) ════════ */
+    DOM.copyBtn.addEventListener('click', async () => {
+      if (!state.lastOutput) return;
+      try {
+        await navigator.clipboard.writeText(state.lastOutput);
+        DOM.copyBtn.textContent = 'Copied!';
+        DOM.copyBtn.style.color = '#2DD4BF';
+        DOM.copyBtn.style.borderColor = 'rgba(45,212,191,0.4)';
+        setTimeout(() => {
+          DOM.copyBtn.textContent = 'Copy';
+          DOM.copyBtn.style.color = '';
+          DOM.copyBtn.style.borderColor = '';
+        }, 2000);
+      } catch (_) {}
+    });
+
+    /* ════════ DOWNLOAD ════════ */
+    function downloadOutput() {
+      if (!state.lastOutput) return;
+      const name = state.mode === 'minify' ? 'minified.json' : 'formatted.json';
+      const blob = new Blob([state.lastOutput], { type: 'application/json' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url; a.download = name; a.click();
+      URL.revokeObjectURL(url);
+    }
+    DOM.downloadBtn.addEventListener('click', downloadOutput);
+
+    /* ════════ EXPAND ════════ */
+    DOM.expandBtn.addEventListener('click', () => {
+      state.expanded = !state.expanded;
+      DOM.outputBody.style.height = state.expanded ? '650px' : '300px';
+      DOM.expandBtn.textContent = state.expanded ? 'Collapse ↕' : 'Expand ↕';
+    });
+
+    /* ════════ PANEL RESIZER ════════ */
+    (function () {
+      const resizer = $('panel-resizer');
+      const layout  = $('tool-layout');
+      let startX, startW, dragging = false;
+      resizer.addEventListener('mousedown', e => {
+        startX   = e.clientX;
+        startW   = parseInt(getComputedStyle(layout).getPropertyValue('--left-w') || '420', 10);
+        dragging = true;
+        document.body.style.cursor     = 'col-resize';
+        document.body.style.userSelect = 'none';
+      });
+      document.addEventListener('mousemove', e => {
+        if (!dragging) return;
+        const newW = Math.min(700, Math.max(260, startW + e.clientX - startX));
+        layout.style.setProperty('--left-w', newW + 'px');
+      });
+      document.addEventListener('mouseup', () => {
+        if (!dragging) return;
+        dragging = false;
+        document.body.style.cursor     = '';
+        document.body.style.userSelect = '';
+      });
+    })();
+
+    /* ════════ SAMPLE DATA ════════ */
+    const SAMPLE_JSON = JSON.stringify({
+      user: {
+        id: 42,
+        name: 'Alice Müller',
+        email: 'alice@example.com',
+        active: true,
+        roles: ['admin', 'editor'],
+        address: {
+          street: 'Hauptstraße 12',
+          city: 'Berlin',
+          country: 'DE',
+          postal: '10115'
+        },
+        preferences: {
+          theme: 'dark',
+          language: 'en',
+          notifications: { email: true, sms: false, push: true }
+        }
+      },
+      orders: [
+        {
+          id: 'ORD-001', amount: 149.99, currency: 'EUR', status: 'paid',
+          items: [{ sku: 'TOOL-PRO', qty: 1, price: 149.99 }],
+          created_at: '2026-03-12T09:41:00Z'
+        },
+        {
+          id: 'ORD-002', amount: 299.00, currency: 'USD', status: 'pending',
+          items: [{ sku: 'TOOL-BIZ', qty: 1, price: 299.00 }],
+          created_at: '2026-04-01T14:22:33Z'
+        }
+      ],
+      meta: {
+        api_version: '2.1',
+        generated_at: '2026-05-16T00:00:00Z',
+        total_records: 2,
+        tags: ['billing', 'users', 'orders'],
+        debug: null
+      }
+    }, null, 2);
+
+    /* ════════ INIT ════════ */
+    LicenseManager.init();
+    window._pbDownload = downloadOutput;
+
+  })();
+
+  /* ════════ GOLD STANDARD INIT ════════ */
+  GoldStandard.init({
+    toolName : 'JSON Formatter',
+    tier     : 'free',
+    onConvert : null,
+    onDownload: function() { if (window._pbDownload) window._pbDownload(); },
+    shortcuts: [
+      { keys: ['Ctrl', 'Enter'], desc: 'Format / process'   },
+      { keys: ['Ctrl', 'S'],     desc: 'Download output'    },
+      { keys: ['Ctrl', 'K'],     desc: 'Open tool switcher' },
+      { keys: ['Escape'],        desc: 'Close overlay'      },
+      { keys: ['?'],             desc: 'Toggle shortcuts'   },
+    ],
+  });
+  </script>
+  <script src="../js/oss-page-chrome.js"></script>
+</body>
+</html>

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/assets/icon-192.png">
+  <title>Built with - PrivBatch</title>
+  <meta name="description" content="Every CDN library PrivBatch loads, with versions, licences, and source links. Open source only, audit any of it yourself.">
+  <link rel="canonical" href="https://privbatch.com/built-with.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/light-mode.css">
+  <style>
+    body { display: flex; flex-direction: column; min-height: 100vh; }
+
+    .prose-wrap {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 48px 28px 80px;
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .prose-eyebrow {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .prose-title {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--text-1);
+      margin-bottom: 10px;
+    }
+
+    .prose-subtitle {
+      font-size: 14px;
+      color: var(--text-2);
+      line-height: 1.7;
+      margin-bottom: 36px;
+      max-width: 680px;
+    }
+
+    .lib-table-wrap {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      background: rgba(30,27,46,0.4);
+      margin-bottom: 36px;
+    }
+
+    .lib-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .lib-table thead th {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      text-align: left;
+      padding: 12px 14px;
+      background: rgba(167,139,250,0.04);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .lib-table tbody td {
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--border-s);
+      color: var(--text-2);
+      vertical-align: top;
+      line-height: 1.55;
+    }
+
+    .lib-table tbody tr:last-child td { border-bottom: none; }
+
+    .lib-table tbody tr:hover {
+      background: rgba(167,139,250,0.03);
+    }
+
+    .lib-name {
+      color: var(--text-1);
+      font-weight: 600;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .lib-version {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+
+    .lib-license {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-2);
+      white-space: nowrap;
+    }
+
+    .lib-link {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+      text-decoration: none;
+      transition: opacity 0.15s;
+      white-space: nowrap;
+    }
+
+    .lib-link:hover { opacity: 0.75; text-decoration: underline; }
+
+    .lib-used {
+      font-size: 12px;
+      color: var(--text-2);
+    }
+
+    .lib-note {
+      display: block;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-3);
+      margin-top: 4px;
+    }
+
+    .prose-section {
+      margin-bottom: 28px;
+    }
+
+    .prose-section h2 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-1);
+      margin-bottom: 12px;
+      letter-spacing: -0.2px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .prose-section h2::before {
+      content: '';
+      display: inline-block;
+      width: 3px;
+      height: 14px;
+      background: var(--accent);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .prose-section p {
+      font-size: 13px;
+      color: var(--text-2);
+      line-height: 1.75;
+      margin: 0 0 10px;
+    }
+
+    .prose-divider {
+      height: 1px;
+      background: var(--border-s);
+      margin: 40px 0 32px;
+    }
+
+    /* Responsive: stack the table on narrow screens */
+    @media (max-width: 720px) {
+      .lib-table thead { display: none; }
+      .lib-table, .lib-table tbody, .lib-table tr, .lib-table td { display: block; width: 100%; box-sizing: border-box; }
+      .lib-table tbody tr {
+        border-bottom: 1px solid var(--border);
+        padding: 8px 0;
+      }
+      .lib-table tbody tr:last-child { border-bottom: none; }
+      .lib-table tbody td {
+        border-bottom: none;
+        padding: 4px 14px;
+      }
+      .lib-table tbody td::before {
+        content: attr(data-label);
+        display: inline-block;
+        width: 80px;
+        font-family: var(--mono);
+        font-size: 10px;
+        text-transform: uppercase;
+        color: var(--text-3);
+        letter-spacing: 0.08em;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-layer dot-grid" aria-hidden="true">
+    <div class="blob blob-tool-1"></div>
+    <div class="blob blob-tool-2"></div>
+  </div>
+
+  <!-- Nav header -->
+  <header class="header-tool">
+    <div class="header-inner">
+      <a class="back-link" href="index.html">&larr; All tools</a>
+      <div class="header-sep"></div>
+      <a href="/index.html">
+        <img src="/assets/logo-horizontal.svg" alt="PrivBatch" height="32">
+      </a>
+      <span class="tool-crumb" aria-label="Built with">
+        <span class="sep">/</span>
+        <span class="name">Built with</span>
+      </span>
+      <div class="h-spacer"></div>
+      <div class="privacy-badge badge-inline">
+        <div class="dot" aria-hidden="true"></div>
+        100% offline
+      </div>
+    </div>
+  </header>
+
+  <div class="prose-wrap">
+    <div class="prose-eyebrow">Transparency</div>
+    <h1 class="prose-title">Built with</h1>
+    <p class="prose-subtitle">PrivBatch loads these libraries from public CDNs. Every script is open source. Nothing is hidden.</p>
+
+    <div class="lib-table-wrap">
+      <table class="lib-table">
+        <thead>
+          <tr>
+            <th>Library</th>
+            <th>Version</th>
+            <th>Licence</th>
+            <th>Source</th>
+            <th>Used in PrivBatch</th>
+          </tr>
+        </thead>
+        <tbody>
+
+          <tr>
+            <td data-label="Library" class="lib-name">Papa Parse</td>
+            <td data-label="Version"><span class="lib-version">5.4.1</span></td>
+            <td data-label="Licence"><span class="lib-license">MIT</span></td>
+            <td data-label="Source"><a class="lib-link" href="https://github.com/mholt/PapaParse" target="_blank" rel="noopener noreferrer">github.com/mholt/PapaParse</a></td>
+            <td data-label="Used in" class="lib-used">CSV &#x21D4; JSON</td>
+          </tr>
+
+          <tr>
+            <td data-label="Library" class="lib-name">SheetJS (xlsx)</td>
+            <td data-label="Version"><span class="lib-version">latest</span></td>
+            <td data-label="Licence"><span class="lib-license">Apache-2.0</span></td>
+            <td data-label="Source"><a class="lib-link" href="https://github.com/SheetJS/sheetjs" target="_blank" rel="noopener noreferrer">github.com/SheetJS/sheetjs</a></td>
+            <td data-label="Used in" class="lib-used">Excel &#x2192; JSON<span class="lib-note">Served from cdn.sheetjs.com (xlsx-latest tag)</span></td>
+          </tr>
+
+          <tr>
+            <td data-label="Library" class="lib-name">jsPDF</td>
+            <td data-label="Version"><span class="lib-version">2.5.1</span></td>
+            <td data-label="Licence"><span class="lib-license">MIT</span></td>
+            <td data-label="Source"><a class="lib-link" href="https://github.com/parallax/jsPDF" target="_blank" rel="noopener noreferrer">github.com/parallax/jsPDF</a></td>
+            <td data-label="Used in" class="lib-used">CSV &#x21D4; JSON, XML &#x21D4; JSON, Excel &#x2192; JSON, SQL &#x2192; JSON, GDPR Suite, GDPR Pack, Bundle Mode</td>
+          </tr>
+
+          <tr>
+            <td data-label="Library" class="lib-name">JSZip</td>
+            <td data-label="Version"><span class="lib-version">3.10.1</span></td>
+            <td data-label="Licence"><span class="lib-license">MIT or GPLv3</span></td>
+            <td data-label="Source"><a class="lib-link" href="https://github.com/Stuk/jszip" target="_blank" rel="noopener noreferrer">github.com/Stuk/jszip</a></td>
+            <td data-label="Used in" class="lib-used">CSV &#x21D4; JSON, XML &#x21D4; JSON, Excel &#x2192; JSON, SQL &#x2192; JSON, GDPR Pack, Bundle Mode</td>
+          </tr>
+
+          <tr>
+            <td data-label="Library" class="lib-name">crypto-js</td>
+            <td data-label="Version"><span class="lib-version">4.2.0, 4.1.1</span></td>
+            <td data-label="Licence"><span class="lib-license">MIT</span></td>
+            <td data-label="Source"><a class="lib-link" href="https://github.com/brix/crypto-js" target="_blank" rel="noopener noreferrer">github.com/brix/crypto-js</a></td>
+            <td data-label="Used in" class="lib-used">Hash Generator (4.2.0), GDPR Suite + GDPR Pack + Bundle Mode (4.1.1)<span class="lib-note">Two versions loaded across different tools</span></td>
+          </tr>
+
+          <tr>
+            <td data-label="Library" class="lib-name">marked</td>
+            <td data-label="Version"><span class="lib-version">9.1.6</span></td>
+            <td data-label="Licence"><span class="lib-license">MIT</span></td>
+            <td data-label="Source"><a class="lib-link" href="https://github.com/markedjs/marked" target="_blank" rel="noopener noreferrer">github.com/markedjs/marked</a></td>
+            <td data-label="Used in" class="lib-used">Markdown Preview</td>
+          </tr>
+
+          <tr>
+            <td data-label="Library" class="lib-name">cronstrue</td>
+            <td data-label="Version"><span class="lib-version">2.50.0</span></td>
+            <td data-label="Licence"><span class="lib-license">MIT</span></td>
+            <td data-label="Source"><a class="lib-link" href="https://github.com/bradymholt/cRonstrue" target="_blank" rel="noopener noreferrer">github.com/bradymholt/cRonstrue</a></td>
+            <td data-label="Used in" class="lib-used">Cron Parser</td>
+          </tr>
+
+          <tr>
+            <td data-label="Library" class="lib-name">js-yaml</td>
+            <td data-label="Version"><span class="lib-version">4.1.0</span></td>
+            <td data-label="Licence"><span class="lib-license">MIT</span></td>
+            <td data-label="Source"><a class="lib-link" href="https://github.com/nodeca/js-yaml" target="_blank" rel="noopener noreferrer">github.com/nodeca/js-yaml</a></td>
+            <td data-label="Used in" class="lib-used">YAML &#x21D4; JSON, .env Formatter</td>
+          </tr>
+
+          <tr>
+            <td data-label="Library" class="lib-name">jsonpath</td>
+            <td data-label="Version"><span class="lib-version">1.1.1</span></td>
+            <td data-label="Licence"><span class="lib-license">MIT</span></td>
+            <td data-label="Source"><a class="lib-link" href="https://github.com/dchester/jsonpath" target="_blank" rel="noopener noreferrer">github.com/dchester/jsonpath</a></td>
+            <td data-label="Used in" class="lib-used">JSON Query</td>
+          </tr>
+
+        </tbody>
+      </table>
+    </div>
+
+    <div class="prose-section">
+      <h2>Why CDN-only</h2>
+      <p>We load these from cdnjs.cloudflare.com and cdn.sheetjs.com because they cache once per user and never reload. After your first visit, every tool runs without fetching anything.</p>
+      <p>Each library is auditable on its GitHub page. No build step, no bundle, no transpilation. You can open DevTools, view the source of any tool, and read exactly what runs on your machine.</p>
+    </div>
+
+    <div class="prose-divider"></div>
+
+    <div class="prose-section">
+      <h2>One more thing</h2>
+      <p>Google Fonts (Geist, IBM Plex Mono) is also loaded for typography. Beyond the libraries above and that font request, PrivBatch makes no network calls during processing - confirm it yourself with Prove It mode in any tool.</p>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer-tool">
+    <div class="footer-inner">
+      <span>&copy; 2026 PrivBatch</span>
+      <a href="privacy.html">Privacy</a>
+      <a href="changelog.html">Changelog</a>
+      <a href="licence.html">Licence</a>
+      <span class="footer-note">All processing is local - zero uploads, zero logs</span>
+    </div>
+  </footer>
+
+  <script src="js/oss-page-chrome.js"></script>
+</body>
+</html>

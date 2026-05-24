@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/assets/icon-192.png">
+  <title>PrivBatch Free - 17 open-source privacy-first developer tools</title>
+  <meta name="description" content="The open-source core of PrivBatch: 17 developer tools that run 100% in your browser. No uploads, no accounts, no telemetry. MIT licensed.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/light-mode.css">
+  <style>
+    body { background: var(--bg); }
+
+    /* OSS banner - frames this repo as a trust signal, not a competitor */
+    .oss-banner {
+      background: rgba(167,139,250,0.08);
+      border-bottom: 1px solid rgba(167,139,250,0.2);
+      padding: 10px 20px;
+      text-align: center;
+      font-family: var(--mono); font-size: 12px;
+      color: var(--text-2);
+      line-height: 1.55;
+    }
+    .oss-banner strong { color: var(--text-1); font-weight: 600; }
+    .oss-banner a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    .oss-banner a:hover { text-decoration: underline; }
+
+    /* Header */
+    .header { padding: 14px 24px; border-bottom: 1px solid var(--border-s); display: flex; align-items: center; gap: 14px; }
+    .header-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .header-logo img { height: 28px; }
+    .header-name { font-size: 14px; font-weight: 700; color: var(--text-1); letter-spacing: -0.3px; }
+    .header-name .free-tag { color: var(--accent); font-weight: 600; }
+    .header-spacer { flex: 1; }
+    .header-link {
+      font-family: var(--mono); font-size: 11px; color: var(--text-3);
+      text-decoration: none; padding: 6px 12px;
+      border: 1px solid var(--border); border-radius: 6px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .header-link:hover { color: var(--text-1); border-color: var(--border-h); }
+
+    /* Hero - simpler than production, no pricing */
+    .hero {
+      padding: 36px 24px 28px;
+      background: linear-gradient(180deg, rgba(167,139,250,0.04) 0%, transparent 100%);
+      border-bottom: 1px solid var(--border);
+    }
+    .hero-inner { max-width: 1180px; margin: 0 auto; }
+    .hero h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.2; }
+    .hero h1 em { color: var(--accent); font-style: normal; }
+    .hero p.tagline { margin-top: 6px; font-size: 14px; color: var(--text-2); }
+    .hero-stats {
+      display: grid; grid-template-columns: repeat(4, auto);
+      gap: 0; margin-top: 20px;
+      border: 1px solid var(--border); border-radius: 10px;
+      background: rgba(167,139,250,0.04);
+      padding: 12px 4px; max-width: 580px;
+    }
+    .hero-stat {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 0 16px; border-right: 1px solid var(--border-s); text-align: center;
+    }
+    .hero-stat:last-child { border-right: none; }
+    .hero-stat-number { font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--accent); letter-spacing: -0.5px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+    .hero-stat-label { font-family: var(--mono); font-size: 9px; font-weight: 500; letter-spacing: 0.04em; color: var(--text-3); text-transform: uppercase; margin-top: 4px; max-width: 110px; line-height: 1.35; }
+    @media (max-width: 700px) {
+      .hero-stats { grid-template-columns: repeat(2, 1fr); max-width: 100%; padding: 10px 0; }
+      .hero-stat { padding: 8px 12px; border-right: 1px solid var(--border-s); border-bottom: 1px solid var(--border-s); }
+      .hero-stat:nth-child(2n) { border-right: none; }
+      .hero-stat:nth-last-child(-n+2) { border-bottom: none; }
+      .hero-stat-number { font-size: 18px; }
+    }
+
+    /* Search */
+    .search-wrap { max-width: 1180px; margin: 0 auto; padding: 20px 24px 0; position: relative; }
+    .search-icon { position: absolute; left: 38px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--text-3); pointer-events: none; }
+    .search-input {
+      width: 100%; box-sizing: border-box;
+      padding: 11px 14px 11px 38px;
+      font-family: var(--mono); font-size: 13px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text-1); outline: none;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .search-input:focus { border-color: rgba(167,139,250,0.5); background: rgba(167,139,250,0.04); }
+    .search-input::placeholder { color: var(--text-3); }
+
+    /* Tool grid */
+    .grid-wrap { max-width: 1180px; margin: 0 auto; padding: 24px 24px 60px; }
+    .cat-section { margin-bottom: 36px; }
+    .cat-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border-s); }
+    .cat-title { font-size: 13px; font-weight: 700; color: var(--text-2); letter-spacing: -0.1px; }
+    .cat-count { font-family: var(--mono); font-size: 10px; color: var(--text-3); background: rgba(167,139,250,0.08); border: 1px solid rgba(167,139,250,0.15); padding: 1px 7px; border-radius: 4px; }
+    .tool-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+    .card {
+      display: flex; flex-direction: column; gap: 6px;
+      padding: 14px 16px;
+      background: rgba(255,255,255,0.025);
+      border: 1px solid var(--border-s);
+      border-radius: 8px;
+      text-decoration: none;
+      transition: background 0.15s, border-color 0.15s, transform 0.12s;
+      position: relative;
+    }
+    .card:hover { background: rgba(167,139,250,0.06); border-color: rgba(167,139,250,0.25); transform: translateY(-1px); }
+    .card-icon { font-family: var(--mono); font-size: 16px; color: var(--accent); width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; background: rgba(167,139,250,0.1); border-radius: 6px; }
+    .card-badge { position: absolute; top: 12px; right: 14px; font-family: var(--mono); font-size: 9px; font-weight: 600; color: var(--free); letter-spacing: 0.06em; }
+    .card-title { font-size: 14px; font-weight: 700; color: var(--text-1); margin-top: 6px; }
+    .card-desc { font-size: 12px; color: var(--text-3); line-height: 1.5; margin: 0; }
+    .card-cta { display: inline-flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 10px; color: var(--accent); margin-top: 8px; opacity: 0.75; }
+    .no-results { text-align: center; padding: 40px; color: var(--text-3); font-family: var(--mono); font-size: 12px; display: none; }
+    .no-results.visible { display: block; }
+
+    /* Footer */
+    footer { padding: 24px; border-top: 1px solid var(--border-s); }
+    .footer-inner { max-width: 1180px; margin: 0 auto; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; font-family: var(--mono); font-size: 11px; color: var(--text-3); }
+    .footer-inner a { color: var(--text-2); text-decoration: none; }
+    .footer-inner a:hover { color: var(--text-1); }
+    .footer-note { margin-left: auto; opacity: 0.7; }
+    @media (max-width: 700px) { .footer-note { margin-left: 0; } }
+  </style>
+</head>
+<body>
+
+  <!-- OSS trust-signal banner -->
+  <div class="oss-banner">
+    This is the <strong>open-source core</strong> of PrivBatch. For the full version including the browser CLI, Smart Regex Batch, GDPR Documentation Pack, and the 4 Pro batch converters (CSV/XML/Excel/SQL &harr; JSON), visit <a href="https://privbatch.com">privbatch.com</a>.
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <a class="header-logo" href="/">
+      <img src="assets/logo-horizontal.svg" alt="PrivBatch">
+      <span class="header-name">PrivBatch <span class="free-tag">Free</span></span>
+    </a>
+    <div class="header-spacer"></div>
+    <a class="header-link" href="https://github.com/privbatch/privbatch" target="_blank" rel="noopener">GitHub</a>
+    <a class="header-link" href="https://privbatch.com" target="_blank" rel="noopener">Hosted version &rarr;</a>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-inner">
+      <h1>17 open-source tools that run <em>100% offline</em></h1>
+      <p class="tagline">Vanilla HTML/CSS/JS. No build step. No accounts. No telemetry. MIT licensed.</p>
+      <div class="hero-stats" aria-label="PrivBatch Free by the numbers">
+        <div class="hero-stat"><span class="hero-stat-number">17</span><span class="hero-stat-label">tools</span></div>
+        <div class="hero-stat"><span class="hero-stat-number">0</span><span class="hero-stat-label">bytes sent to any server</span></div>
+        <div class="hero-stat"><span class="hero-stat-number">0</span><span class="hero-stat-label">accounts required</span></div>
+        <div class="hero-stat"><span class="hero-stat-number">100%</span><span class="hero-stat-label">client-side processing</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Search -->
+  <div class="search-wrap">
+    <span class="search-icon" aria-hidden="true">&#128269;</span>
+    <input class="search-input" id="search" type="search"
+           placeholder="Search 17 tools..." autocomplete="off" aria-label="Search tools">
+  </div>
+
+  <!-- Tool grid -->
+  <main class="grid-wrap">
+    <div class="no-results" id="no-results">No tools match your search.</div>
+
+    <!-- Converters -->
+    <div class="cat-section" id="cat-converters">
+      <div class="cat-header"><span class="cat-title">Converters</span><span class="cat-count">2 tools</span></div>
+      <div class="tool-grid" role="list">
+
+        <a class="card" href="tools/yaml-json.html" role="listitem" data-name="yaml json convert config free">
+          <div class="card-icon">---</div><div class="card-badge">FREE</div>
+          <div class="card-title">YAML &harr; JSON</div>
+          <p class="card-desc">Convert between YAML and JSON. Preserves comments and ordering where possible.</p>
+          <span class="card-cta">Open &rarr;</span>
+        </a>
+
+        <a class="card" href="tools/markdown-preview.html" role="listitem" data-name="markdown md preview html render free">
+          <div class="card-icon">M&darr;</div><div class="card-badge">FREE</div>
+          <div class="card-title">Markdown Preview</div>
+          <p class="card-desc">Live-render Markdown to HTML. GitHub-flavoured, headings, tables, code blocks.</p>
+          <span class="card-cta">Open &rarr;</span>
+        </a>
+
+      </div>
+    </div>
+
+    <!-- Formatters & Validators -->
+    <div class="cat-section" id="cat-formatters">
+      <div class="cat-header"><span class="cat-title">Formatters &amp; Validators</span><span class="cat-count">8 tools</span></div>
+      <div class="tool-grid" role="list">
+
+        <a class="card" href="tools/json-formatter.html" role="listitem" data-name="json formatter pretty print minify validate free">
+          <div class="card-icon">{ }</div><div class="card-badge">FREE</div>
+          <div class="card-title">JSON Formatter</div>
+          <p class="card-desc">Pretty-print, minify, and validate JSON. Errors point to the exact line.</p>
+          <span class="card-cta">Open &rarr;</span>
+        </a>
+
+        <a class="card" href="tools/json-query.html" role="listitem" data-name="json query path jq extract free">
+          <div class="card-icon">?{}</div><div class="card-badge">FREE</div>
+          <div class="card-title">JSON Query</div>
+          <p class="card-desc">Extract values from JSON with path syntax. Like jq but in your browser.</p>
+          <span class="card-cta">Open &rarr;</span>
+        </a>
+
+        <a class="card" href="tools/base64.html" role="listitem" data-name="base64 encode decode free">
+          <div class="card-icon">64</div><div class="card-badge">FREE</div>
+          <div class="card-title">Base64</div>
+          <p class="card-desc">Encode or decode base64. Handles text and binary blobs.</p>
+          <span class="card-cta">Open &rarr;</span>
+        </a>
+
+        <a class="card" href="tools/jwt-decoder.html" role="listitem" data-name="jwt decoder token security free">
+          <div class="card-icon">&#128273;</div><div class="card-badge">FREE</div>
+          <div class="card-title">JWT Decoder</div>
+          <p class="card-desc">Decode and inspect JWT tokens. View header, payload, expiry, algorithm.</p>
+          <span class="card-cta">Open &rarr;</span>
+        </a>
+
+        <a class="card" href="tools/env-formatter.html" role="listitem" data-name="env formatter dotenv sort dedupe free">
+          <div class="card-icon">&#9881;</div><div class="card-badge">FREE</div>
+          <div class="card-title">.env Formatter</div>
+          <p class="card-desc">Sort, dedupe, and validate .env files. Catches missing values and bad syntax.</p>
+          <span class="card-cta">Open &rarr;</span>
+        </a>
+
+        <a class="card" href="tools/file-fixer.html" role="listitem" data-name="file detective fix repair json csv xml free">
+          <div class="card-icon">&#128270;</div><div class="card-badge">FREE</div>
+          <div class="card-title">File Detective</div>
+          <p class="card-desc">Auto-detect and repair broken JSON, CSV, and XML. Trailing commas, mismatched quotes.</p>
+          <span class="card-cta">Open &rarr;</span>
+        </a>
+
+        <a class="card" href="tools/diff-tool.html" role="listitem" data-name="diff tool compare text free">
+          <div class="card-icon">&plusmn;</div><div class="card-badge">FREE</div>
+          <div class="card-title">Diff Tool</div>
+          <p class="card-desc">Compare two pieces of text line by line. Side-by-side or inline.</p>
+          <span class="card-cta">Open &rarr;</span>
+        </a>
+
+        <a class="card" href="tools/url-encoder.html" role="listitem" data-name="url encode decode percent encoding free">
+          <div class="card-icon">&#128279;</div><div class="card-badge">FREE</div>
+          <div class="card-title">URL Encoder/Decoder</div>
+          <p class="card-desc">Encode or decode URLs. Component or full-URI mode. Live conversion.</p>
+          <span class="card-cta">Open &rarr;</span>
+        </a>
+
+      </div>
+    </div>
+
+    <!-- Privacy & Security -->
+    <div class="cat-section" id="cat-privacy">
+      <div class="cat-header"><span class="cat-title">Privacy &amp; Security</span><span class="cat-count">2 tools</span></div>
+      <div class="tool-grid" role="list">
+
+        <a class="card" href="tools/hash-generator.html" role="listitem" data-name="hash md5 sha256 sha512 generator free">
+          <div class="card-icon">#</div><div class="card-badge">FREE</div>
+          <div class="card-title">Hash Generator</div>
+          <p class="card-desc">Generate MD5, SHA-1, SHA-256, SHA-512 hashes from text or files.</p>
+          <span class="card-cta">Open &rarr;</span>
+        </a>
+
+        <a class="card" href="tools/aes-encrypt.html" role="listitem" data-name="aes encryption encrypt decrypt password aes-256 web crypto privacy security free">
+          <div class="card-icon">&#128274;</div><div class="card-badge">FREE</div>
+          <div class="card-title">AES-256 File Encryption</div>
+          <p class="card-desc">Encrypt files with a password using AES-256-GCM. Native Web Crypto, PBKDF2 600k iterations.</p>
+          <span class="card-cta">Open &rarr;</span>
+        </a>
+
+      </div>
+    </div>
+
+    <!-- Generators & Utilities -->
+    <div class="cat-section" id="cat-utilities">
+      <div class="cat-header"><span class="cat-title">Generators &amp; Utilities</span><span class="cat-count">5 tools</span></div>
+      <div class="tool-grid" role="list">
+
+        <a class="card" href="tools/uuid-generator.html" role="listitem" data-name="uuid guid generator v4 free">
+          <div class="card-icon">&oplus;</div><div class="card-badge">FREE</div>
+          <div class="card-title">UUID Generator</div>
+          <p class="card-desc">Generate UUID v4 in bulk. Standard, uppercase, or braces format.</p>
+          <span class="card-cta">Open &rarr;</span>
+        </a>
+
+        <a class="card" href="tools/cron-parser.html" role="listitem" data-name="cron parser expression schedule free">
+          <div class="card-icon">&#9201;</div><div class="card-badge">FREE</div>
+          <div class="card-title">Cron Parser</div>
+          <p class="card-desc">Parse and explain cron expressions. See the next 10 run times.</p>
+          <span class="card-cta">Open &rarr;</span>
+        </a>
+
+        <a class="card" href="tools/timestamp.html" role="listitem" data-name="timestamp unix epoch converter free">
+          <div class="card-icon">&#128197;</div><div class="card-badge">FREE</div>
+          <div class="card-title">Timestamp Converter</div>
+          <p class="card-desc">Convert Unix timestamps to human dates and back. UTC, ISO 8601, relative.</p>
+          <span class="card-cta">Open &rarr;</span>
+        </a>
+
+        <a class="card" href="tools/number-base.html" role="listitem" data-name="number base converter binary hex octal decimal free">
+          <div class="card-icon">01</div><div class="card-badge">FREE</div>
+          <div class="card-title">Number Base Converter</div>
+          <p class="card-desc">Convert between binary, octal, decimal, and hex. Live bit pattern visualiser.</p>
+          <span class="card-cta">Open &rarr;</span>
+        </a>
+
+        <a class="card" href="tools/color-converter.html" role="listitem" data-name="color converter hex rgb hsl hsv free">
+          <div class="card-icon">&#127912;</div><div class="card-badge">FREE</div>
+          <div class="card-title">Color Converter</div>
+          <p class="card-desc">Convert between HEX, RGB, HSL, and HSV. Color picker and palette presets.</p>
+          <span class="card-cta">Open &rarr;</span>
+        </a>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-inner">
+      <span>&copy; 2026 PrivBatch &middot; <a href="LICENSE">MIT licence</a></span>
+      <a href="https://github.com/privbatch/privbatch" target="_blank" rel="noopener">GitHub</a>
+      <a href="built-with.html">Built with</a>
+      <a href="https://privbatch.com" target="_blank" rel="noopener">Hosted version (full features)</a>
+      <span class="footer-note">Vanilla JS &bull; No frameworks &bull; No build tools &bull; 100% offline</span>
+    </div>
+  </footer>
+
+  <script>
+    /* Simple card search - filters tool grid by data-name attribute. */
+    (function () {
+      const search = document.getElementById('search');
+      const cards = Array.from(document.querySelectorAll('.card[data-name]'));
+      const sections = Array.from(document.querySelectorAll('.cat-section'));
+      const noResults = document.getElementById('no-results');
+      if (!search) return;
+      search.addEventListener('input', () => {
+        const q = search.value.trim().toLowerCase();
+        let totalVisible = 0;
+        cards.forEach(card => {
+          const match = !q || card.dataset.name.toLowerCase().includes(q) || card.querySelector('.card-title').textContent.toLowerCase().includes(q);
+          card.style.display = match ? '' : 'none';
+          if (match) totalVisible++;
+        });
+        /* Hide whole section when none of its cards match. */
+        sections.forEach(sec => {
+          const anyVisible = Array.from(sec.querySelectorAll('.card')).some(c => c.style.display !== 'none');
+          sec.style.display = anyVisible ? '' : 'none';
+        });
+        noResults.classList.toggle('visible', totalVisible === 0 && q.length > 0);
+      });
+    })();
+  </script>
+</body>
+</html>

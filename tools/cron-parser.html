@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/assets/icon-192.png">
+  <title>Cron Parser - Free, Private, Offline | PrivBatch</title>
+  <meta name="description" content="Parse and explain cron expressions. See next run times. Runs 100% in your browser.">
+  <link rel="canonical" href="https://privbatch.com/tools/cron-parser.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/light-mode.css">
+  <script src="../js/config.js"></script>
+  <script src="../js/gold-standard.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cronstrue/2.50.0/cronstrue.min.js"></script>
+  <style>
+    body { display: flex; flex-direction: column; min-height: 100vh; box-sizing: border-box; }
+    .tool-header { position: relative; z-index: 1; background: var(--bg); border-bottom: 1px solid var(--border-s); flex-shrink: 0; }
+    .tool-header-inner { max-width: 1400px; margin: 0 auto; padding: 10px 24px; display: flex; align-items: center; gap: 16px; }
+    .tool-title { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; color: var(--text-1); }
+    .tool-header-spacer { flex: 1; }
+    .tool-badge-free { font-family: var(--mono); font-size: 9px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--free); display: flex; align-items: center; gap: 5px; }
+    .tool-badge-free::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--free); }
+    .settings-bar { position: relative; z-index: 96; background: rgba(22,19,34,0.98); border-bottom: 1px solid var(--border); padding: 0 24px; height: 44px; display: flex; align-items: center; gap: 16px; overflow: visible; flex-shrink: 0; }
+    .sbar-group { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+    .sbar-label { font-family: var(--mono); font-size: 10px; color: var(--text-3); white-space: nowrap; }
+    .sbar-sep { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
+    .sbar-btn { font-family: var(--mono); font-size: 10px; font-weight: 600; padding: 4px 10px; cursor: pointer; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-3); transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
+    .sbar-btn:hover { color: var(--text-1); border-color: rgba(167,139,250,0.4); }
+    .sbar-btn.active { background: rgba(167,139,250,0.15); color: var(--accent); border-color: rgba(167,139,250,0.4); }
+    .live-badge { font-family: var(--mono); font-size: 8px; font-weight: 600; text-transform: uppercase; color: var(--free); padding: 2px 5px; border: 1px solid rgba(45,212,191,0.3); border-radius: 4px; }
+    .tool-layout { display: grid; grid-template-columns: var(--left-w, 420px) 8px 1fr; max-width: 1400px; width: 100%; margin: 0 auto; padding: 12px 24px; box-sizing: border-box; gap: 0; align-items: stretch; position: relative; z-index: 1; }
+    .panel-resizer { display: flex; align-items: flex-start; justify-content: center; padding-top: 20px; cursor: col-resize; user-select: none; z-index: 10; }
+    .panel-resizer::after { content: ''; width: 2px; height: 32px; background: var(--border); border-radius: 1px; transition: background 0.15s; }
+    .panel-resizer:hover::after { background: rgba(167,139,250,0.4); }
+    .left-panel { display: flex; flex-direction: column; overflow: hidden; }
+    .right-col { display: flex; flex-direction: column; }
+    .output-panel { display: flex; flex-direction: column; overflow: hidden; }
+    .output-body { height: 300px; overflow-y: auto; display: flex; flex-direction: column; }
+    .output-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: var(--text-3); font-family: var(--mono); font-size: 11px; }
+    .output-empty-icon { font-size: 32px; opacity: 0.25; }
+    .output-footer { padding: 8px 16px; border-top: 1px solid var(--border-s); display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+    .output-stat { font-family: var(--mono); font-size: 10px; color: var(--text-3); }
+    .stats-bar { font-family: var(--mono); font-size: 10px; color: var(--free); padding: 5px 16px; display: none; flex-shrink: 0; animation: stats-in 0.25s ease-out; border-top: 1px solid rgba(45,212,191,0.15); background: rgba(45,212,191,0.04); }
+    .stats-bar.visible { display: block; }
+    @keyframes stats-in { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
+    /* Cron-specific */
+    .cron-input-wrap { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+    .cron-field { display: flex; flex-direction: column; gap: 6px; }
+    .cron-field label { font-family: var(--mono); font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; }
+    .cron-input { font-family: var(--mono); font-size: 18px; font-weight: 600; letter-spacing: 0.1em; color: var(--text-1); background: rgba(167,139,250,0.06); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; outline: none; width: 100%; box-sizing: border-box; transition: border-color 0.15s; }
+    .cron-input:focus { border-color: var(--accent); }
+    .cron-input.error { border-color: #EF4444; }
+    .cron-parts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+    .cron-part { text-align: center; }
+    .cron-part-label { font-family: var(--mono); font-size: 9px; color: var(--text-3); margin-top: 4px; }
+    .cron-part-val { font-family: var(--mono); font-size: 13px; color: var(--accent); font-weight: 600; background: rgba(167,139,250,0.08); border: 1px solid rgba(167,139,250,0.15); border-radius: 6px; padding: 6px 4px; }
+
+    .presets { display: flex; flex-wrap: wrap; gap: 6px; }
+    .preset-chip { font-family: var(--mono); font-size: 9px; font-weight: 600; padding: 4px 8px; border: 1px solid var(--border); border-radius: 20px; background: transparent; color: var(--text-3); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+    .preset-chip:hover { color: var(--accent); border-color: rgba(167,139,250,0.4); background: rgba(167,139,250,0.06); }
+
+    .cron-explain { font-family: var(--mono); font-size: 12px; color: var(--free); padding: 10px 12px; background: rgba(45,212,191,0.06); border: 1px solid rgba(45,212,191,0.15); border-radius: 8px; line-height: 1.5; min-height: 36px; }
+    .cron-error { font-family: var(--mono); font-size: 11px; color: #EF4444; padding: 8px 12px; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); border-radius: 8px; display: none; }
+    .cron-error.visible { display: block; }
+
+    .next-runs { padding: 12px 0; display: flex; flex-direction: column; }
+    .next-run-row { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid rgba(167,139,250,0.06); }
+    .next-run-row:last-child { border-bottom: none; }
+    .next-run-num { font-family: var(--mono); font-size: 10px; color: var(--text-3); min-width: 20px; }
+    .next-run-date { font-family: var(--mono); font-size: 12px; color: var(--text-1); flex: 1; }
+    .next-run-rel { font-family: var(--mono); font-size: 10px; color: var(--text-3); }
+  </style>
+</head>
+<body>
+
+  <div class="bg-layer dot-grid" aria-hidden="true">
+    <div class="blob blob-tool-1"></div>
+    <div class="blob blob-tool-2"></div>
+    <div class="blob blob-tool-3"></div>
+  </div>
+
+  <header class="header-tool">
+    <div class="header-inner">
+      <a class="back-link" href="../index.html">&larr; All tools</a>
+      <div class="header-sep"></div>
+      <a href="../index.html"><img src="/assets/logo-horizontal.svg" alt="PrivBatch" height="32"></a>
+      <span class="tool-crumb"><span class="sep">/</span><span class="name">Cron Parser</span></span>
+      <div class="h-spacer"></div>
+      <div class="privacy-badge badge-inline"><div class="dot" aria-hidden="true"></div>100% offline</div>
+      <input class="license-input" id="license-input" type="text" placeholder="&#128273; license key" aria-label="License key">
+      <span class="license-unlocked" aria-live="polite"></span>
+    </div>
+  </header>
+
+  <div class="tool-header">
+    <div class="tool-header-inner">
+      <span class="tool-title">Cron Parser</span>
+      <div class="tool-header-spacer"></div>
+      <span class="tool-badge-free">Free tool · No limits</span>
+    </div>
+  </div>
+
+  <div class="settings-bar">
+    <div class="sbar-group"><span class="live-badge">Live</span></div>
+    <div class="sbar-sep"></div>
+    <!-- GS buttons (Recent, Prove It, Shortcuts) injected by gold-standard.js -->
+  </div>
+
+  <div class="tool-layout" id="tool-layout">
+
+    <div class="glass-panel left-panel">
+      <div class="cron-input-wrap">
+        <div class="cron-field">
+          <label>Cron expression</label>
+          <input class="cron-input" id="cron-input" type="text" value="*/5 * * * *" spellcheck="false" placeholder="* * * * *" aria-label="Cron expression">
+          <div class="cron-error" id="cron-error"></div>
+        </div>
+
+        <div class="cron-parts" id="cron-parts">
+          <div class="cron-part"><div class="cron-part-val" id="part-0">*</div><div class="cron-part-label">minute</div></div>
+          <div class="cron-part"><div class="cron-part-val" id="part-1">*</div><div class="cron-part-label">hour</div></div>
+          <div class="cron-part"><div class="cron-part-val" id="part-2">*</div><div class="cron-part-label">day</div></div>
+          <div class="cron-part"><div class="cron-part-val" id="part-3">*</div><div class="cron-part-label">month</div></div>
+          <div class="cron-part"><div class="cron-part-val" id="part-4">*</div><div class="cron-part-label">weekday</div></div>
+        </div>
+
+        <div class="cron-field">
+          <label>Plain English</label>
+          <div class="cron-explain" id="cron-explain">Every 5 minutes</div>
+        </div>
+
+        <div class="cron-field">
+          <label>Presets</label>
+          <div class="presets">
+            <button class="preset-chip" data-cron="* * * * *">Every minute</button>
+            <button class="preset-chip" data-cron="*/5 * * * *">Every 5 min</button>
+            <button class="preset-chip" data-cron="*/15 * * * *">Every 15 min</button>
+            <button class="preset-chip" data-cron="0 * * * *">Every hour</button>
+            <button class="preset-chip" data-cron="0 0 * * *">Daily midnight</button>
+            <button class="preset-chip" data-cron="0 9 * * 1-5">Weekdays 9am</button>
+            <button class="preset-chip" data-cron="0 0 * * 0">Weekly Sunday</button>
+            <button class="preset-chip" data-cron="0 0 1 * *">Monthly 1st</button>
+            <button class="preset-chip" data-cron="0 0 1 1 *">Yearly Jan 1</button>
+            <button class="preset-chip" data-cron="0 12 * * 1-5">Noon weekdays</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-resizer" id="panel-resizer" aria-hidden="true"></div>
+
+    <div class="right-col">
+      <div class="glass-panel output-panel" id="output-panel">
+        <div class="panel-header">
+          <span class="panel-title panel-title-accent">Next Run Times</span>
+          <div class="panel-spacer"></div>
+          <button class="panel-action" id="copy-btn">Copy</button>
+          <button class="panel-action" id="download-btn">Download</button>
+          <button class="panel-action" id="expand-btn">Expand &#8597;</button>
+        </div>
+
+        <div class="output-body" id="output-body">
+          <div class="output-empty" id="output-empty" style="display:none">
+            <div class="output-empty-icon">&#9201;</div>
+            Enter a cron expression to see next run times
+          </div>
+          <div class="next-runs" id="next-runs"></div>
+        </div>
+
+        <div class="output-footer">
+          <span class="output-stat" id="out-stat">Ready</span>
+        </div>
+      </div>
+      <div class="stats-bar" id="stats-bar" aria-live="polite"></div>
+    </div>
+
+  </div>
+
+  <footer class="footer-tool">
+    <div class="footer-inner">
+      <span>© 2026 PrivBatch</span>
+      <a href="../privacy.html">Privacy</a>
+      <a href="../changelog.html">Changelog</a>
+      <a href="../licence.html">Licence</a>
+      <span class="footer-note">All processing is local - zero uploads, zero logs</span>
+    </div>
+  </footer>
+
+  <!-- GS overlays (Prove It, Shortcuts, Switcher) injected by gold-standard.js -->
+
+  <script src="../js/license.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    const $ = id => document.getElementById(id);
+
+    const DOM = {
+      statsBar: $('stats-bar'), copyBtn: $('copy-btn'), downloadBtn: $('download-btn'),
+      expandBtn: $('expand-btn'), outputBody: $('output-body'), outStat: $('out-stat'),
+      cronInput: $('cron-input'), cronExplain: $('cron-explain'), cronError: $('cron-error'),
+      nextRuns: $('next-runs'),
+    };
+
+    const state = { lastOutput: '', expanded: false };
+
+    function fmtSize(b) { if (b < 1024) return b + ' B'; if (b < 1048576) return (b/1024).toFixed(1)+' KB'; return (b/1048576).toFixed(1)+' MB'; }
+    function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function showStatsBar(ms) { DOM.statsBar.textContent = `Parsed in ${ms}ms · 0 bytes sent to any server`; DOM.statsBar.className = 'stats-bar visible'; }
+
+    /* Minimal cron scheduler - calculates next N dates from a 5-field cron */
+    function parseCronField(field, min, max) {
+      const results = new Set();
+      if (field === '*') { for (let i = min; i <= max; i++) results.add(i); return results; }
+      for (const part of field.split(',')) {
+        const [range, step] = part.split('/');
+        const s = parseInt(step, 10) || 1;
+        if (range === '*') { for (let i = min; i <= max; i += s) results.add(i); }
+        else if (range.includes('-')) {
+          const [a, b] = range.split('-').map(Number);
+          for (let i = a; i <= b; i += s) results.add(i);
+        } else { results.add(parseInt(range, 10)); }
+      }
+      return results;
+    }
+
+    function getNextDates(expr, count) {
+      const parts = expr.trim().split(/\s+/);
+      if (parts.length !== 5) throw new Error('Must have exactly 5 fields: minute hour day month weekday');
+      const minutes  = parseCronField(parts[0], 0, 59);
+      const hours    = parseCronField(parts[1], 0, 23);
+      const days     = parseCronField(parts[2], 1, 31);
+      const months   = parseCronField(parts[3], 1, 12);
+      const weekdays = parseCronField(parts[4], 0, 6);
+      const hasDay  = parts[2] !== '*';
+      const hasWday = parts[4] !== '*';
+
+      const results = [];
+      const d = new Date();
+      d.setSeconds(0, 0);
+      d.setMinutes(d.getMinutes() + 1);
+
+      let iters = 0;
+      while (results.length < count && iters < 500000) {
+        iters++;
+        const mo = d.getMonth() + 1;
+        const dy = d.getDate();
+        const wd = d.getDay();
+        const hr = d.getHours();
+        const mn = d.getMinutes();
+
+        if (!months.has(mo)) { d.setMonth(d.getMonth() + 1); d.setDate(1); d.setHours(0); d.setMinutes(0); continue; }
+
+        const dayOk = hasDay && hasWday ? (days.has(dy) || weekdays.has(wd)) : hasDay ? days.has(dy) : hasWday ? weekdays.has(wd) : true;
+        if (!dayOk) { d.setDate(d.getDate() + 1); d.setHours(0); d.setMinutes(0); continue; }
+
+        if (!hours.has(hr)) { d.setHours(d.getHours() + 1); d.setMinutes(0); continue; }
+        if (!minutes.has(mn)) { d.setMinutes(d.getMinutes() + 1); continue; }
+
+        results.push(new Date(d));
+        d.setMinutes(d.getMinutes() + 1);
+      }
+      return results;
+    }
+
+    function relativeTime(date) {
+      const diff = date - Date.now();
+      const s = Math.round(diff / 1000);
+      if (s < 60) return 'in ' + s + 's';
+      const m = Math.round(s / 60);
+      if (m < 60) return 'in ' + m + 'm';
+      const h = Math.round(m / 60);
+      if (h < 24) return 'in ' + h + 'h';
+      return 'in ' + Math.round(h / 24) + 'd';
+    }
+
+    function parseCron() {
+      const t0 = performance.now();
+      const expr = DOM.cronInput.value.trim();
+      if (!expr) return;
+
+      /* Update field indicators */
+      const parts = expr.split(/\s+/);
+      ['part-0','part-1','part-2','part-3','part-4'].forEach((id, i) => {
+        const el = $(id); if (el) el.textContent = parts[i] || '?';
+      });
+
+      /* Explain */
+      let explanation = '';
+      try {
+        explanation = cronstrue.toString(expr);
+        DOM.cronExplain.textContent = explanation;
+        DOM.cronInput.classList.remove('error');
+        DOM.cronError.className = 'cron-error';
+      } catch (e) {
+        DOM.cronInput.classList.add('error');
+        DOM.cronError.textContent = 'Invalid expression: ' + e.message;
+        DOM.cronError.className = 'cron-error visible';
+        DOM.cronExplain.textContent = ' - ';
+        DOM.nextRuns.innerHTML = '';
+        state.lastOutput = '';
+        return;
+      }
+
+      /* Next run times */
+      let dates;
+      try { dates = getNextDates(expr, 10); } catch (e) {
+        DOM.cronError.textContent = e.message;
+        DOM.cronError.className = 'cron-error visible';
+        return;
+      }
+
+      const lines = dates.map((d, i) => {
+        const iso = d.toLocaleString('en-GB', { weekday: 'short', year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+        return `${i + 1}. ${iso} (${relativeTime(d)})`;
+      });
+      state.lastOutput = `Expression: ${expr}\nMeaning: ${explanation}\n\nNext 10 run times:\n${lines.join('\n')}`;
+
+      DOM.nextRuns.innerHTML = dates.map((d, i) => {
+        const iso = d.toLocaleString('en-GB', { weekday: 'short', year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+        return `<div class="next-run-row"><span class="next-run-num">${i + 1}</span><span class="next-run-date">${esc(iso)}</span><span class="next-run-rel">${esc(relativeTime(d))}</span></div>`;
+      }).join('');
+
+      DOM.outStat.textContent = `Next 10 runs calculated`;
+      GoldStandard.History.save({ tool: 'Cron Parser', timestamp: Date.now(), inputSize: new Blob([expr]).size, expr });
+      showStatsBar(Math.round(performance.now() - t0));
+    }
+
+    function downloadOutput() {
+      if (!state.lastOutput) return;
+      const blob = new Blob([state.lastOutput], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob); const a = document.createElement('a');
+      a.href = url; a.download = 'cron-schedule.txt'; a.click(); URL.revokeObjectURL(url);
+    }
+
+    DOM.cronInput.addEventListener('input', parseCron);
+    document.querySelectorAll('.preset-chip').forEach(btn => {
+      btn.addEventListener('click', () => { DOM.cronInput.value = btn.dataset.cron; parseCron(); });
+    });
+
+    DOM.copyBtn.addEventListener('click', async () => {
+      if (!state.lastOutput) return;
+      try {
+        await navigator.clipboard.writeText(state.lastOutput);
+        DOM.copyBtn.textContent = 'Copied!'; DOM.copyBtn.style.color = '#2DD4BF'; DOM.copyBtn.style.borderColor = 'rgba(45,212,191,0.4)';
+        setTimeout(() => { DOM.copyBtn.textContent = 'Copy'; DOM.copyBtn.style.color = ''; DOM.copyBtn.style.borderColor = ''; }, 2000);
+      } catch (_) {}
+    });
+    DOM.downloadBtn.addEventListener('click', downloadOutput);
+    DOM.expandBtn.addEventListener('click', () => { state.expanded = !state.expanded; DOM.outputBody.style.height = state.expanded ? '650px' : '300px'; DOM.expandBtn.textContent = state.expanded ? 'Collapse ↕' : 'Expand ↕'; });
+
+    (function () {
+      const resizer = $('panel-resizer'), layout = $('tool-layout');
+      let startX, startW, dragging = false;
+      resizer.addEventListener('mousedown', e => { startX = e.clientX; startW = parseInt(getComputedStyle(layout).getPropertyValue('--left-w') || '420', 10); dragging = true; document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; });
+      document.addEventListener('mousemove', e => { if (!dragging) return; layout.style.setProperty('--left-w', Math.min(700, Math.max(260, startW + e.clientX - startX)) + 'px'); });
+      document.addEventListener('mouseup', () => { if (!dragging) return; dragging = false; document.body.style.cursor = ''; document.body.style.userSelect = ''; });
+    })();
+
+    GoldStandard.init({
+      toolName : 'Cron Parser',
+      tier     : 'free',
+      onConvert : parseCron,
+      onDownload: downloadOutput,
+      shortcuts: [
+        { keys: ['Ctrl', 'Enter'], desc: 'Convert / process' },
+        { keys: ['Ctrl', 'S'],     desc: 'Download output' },
+        { keys: ['Ctrl', 'K'],     desc: 'Open tool switcher' },
+        { keys: ['Escape'],        desc: 'Close overlay / clear' },
+        { keys: ['?'],             desc: 'Toggle shortcuts' },
+      ],
+    });
+
+    parseCron();
+  })();
+  </script>
+  <script src="../js/oss-page-chrome.js"></script>
+</body>
+</html>

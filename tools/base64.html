@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/assets/icon-192.png">
+  <title>Base64 Encoder &amp; Decoder - Free, Private, Offline | PrivBatch</title>
+  <meta name="description" content="Encode or decode Base64 strings and files privately. Runs 100% in your browser - no uploads, no accounts.">
+  <link rel="canonical" href="https://privbatch.com/tools/base64.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/light-mode.css">
+  <script src="../js/config.js"></script>
+  <script src="../js/gold-standard.js"></script>
+  <style>
+    body {
+      display: flex; flex-direction: column;
+      min-height: 100vh; box-sizing: border-box;
+    }
+
+    /* ── Tool title bar ── */
+    .tool-header {
+      position: relative; z-index: 1;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border-s); flex-shrink: 0;
+    }
+    .tool-header-inner {
+      max-width: 1400px; margin: 0 auto;
+      padding: 10px 24px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .tool-title { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; color: var(--text-1); }
+    .tool-title-and { color: var(--text-3); font-weight: 400; }
+    .tool-header-spacer { flex: 1; }
+    .tool-badge-free {
+      font-family: var(--mono); font-size: 9px; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--free); display: flex; align-items: center; gap: 5px;
+    }
+    .tool-badge-free::before {
+      content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--free);
+    }
+
+    /* ── Settings bar ── */
+    .settings-bar {
+      position: relative; z-index: 96;
+      background: rgba(22,19,34,0.98);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px; height: 44px;
+      display: flex; align-items: center; gap: 16px;
+      overflow: visible; flex-shrink: 0;
+    }
+    .sbar-group { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+    .sbar-label { font-family: var(--mono); font-size: 10px; color: var(--text-3); white-space: nowrap; }
+    .sbar-sep   { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
+
+    .sbar-toggle { display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+    .sbar-mode-btn {
+      font-family: var(--mono); font-size: 10px; font-weight: 600;
+      padding: 4px 10px; cursor: pointer; border: none;
+      background: transparent; color: var(--text-3);
+      transition: background 0.15s, color 0.15s; white-space: nowrap;
+    }
+    .sbar-mode-btn.active { background: rgba(167,139,250,0.15); color: var(--accent); }
+    .sbar-mode-sep { width: 1px; background: var(--border); }
+
+    .sbar-select {
+      font-family: var(--mono); font-size: 10px;
+      background: rgba(167,139,250,0.06);
+      border: 1px solid var(--border); border-radius: 5px;
+      color: var(--text-1); padding: 3px 7px;
+      outline: none; cursor: pointer; transition: border-color 0.15s;
+    }
+    .sbar-select:focus { border-color: var(--accent); }
+
+    .sbar-pill {
+      width: 26px; height: 14px; background: var(--accent-d);
+      border-radius: 99px; position: relative; cursor: pointer; flex-shrink: 0;
+    }
+    .sbar-pill::after {
+      content: ''; position: absolute;
+      width: 10px; height: 10px; background: #fff; border-radius: 50%;
+      top: 2px; right: 2px; transition: all 0.18s;
+    }
+    .sbar-pill.off { background: var(--text-3); }
+    .sbar-pill.off::after { right: auto; left: 2px; }
+
+    /* ── Tool layout ── */
+    .tool-layout {
+      display: grid;
+      grid-template-columns: var(--left-w, 420px) 8px 1fr;
+      max-width: 1400px; width: 100%;
+      margin: 0 auto; padding: 12px 24px;
+      box-sizing: border-box; gap: 0;
+      align-items: stretch;
+      position: relative; z-index: 1;
+    }
+
+    /* ── Panel resizer ── */
+    .panel-resizer {
+      display: flex; align-items: flex-start;
+      justify-content: center; padding-top: 20px;
+      cursor: col-resize; user-select: none; z-index: 10;
+    }
+    .panel-resizer::after {
+      content: ''; width: 2px; height: 32px;
+      background: var(--border); border-radius: 1px; transition: background 0.15s;
+    }
+    .panel-resizer:hover::after { background: var(--border-h); }
+
+    /* ── Left panel ── */
+    .left-panel { display: flex; flex-direction: column; overflow: hidden; }
+
+    .left-tabs { display: flex; border-bottom: 1px solid var(--border-s); flex-shrink: 0; }
+    .left-tab {
+      font-family: var(--mono); font-size: 11px; font-weight: 500;
+      padding: 10px 18px; cursor: pointer; border: none;
+      background: transparent; color: var(--text-3);
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .left-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .left-tab-content { display: none; flex-direction: column; }
+    .left-tab-content.active { display: flex; flex: 1; min-height: 0; }
+
+    /* Paste pane */
+    .input-textarea {
+      width: 100%; flex: 1; min-height: 0; height: 0;
+      font-family: var(--mono); font-size: 12px; line-height: 1.65;
+      background: rgba(0,0,0,0.22); border: none;
+      border-bottom: 1px solid var(--border-s);
+      color: var(--text-1); padding: 14px 16px;
+      resize: none; outline: none; box-sizing: border-box;
+      transition: background 0.15s;
+    }
+    .input-textarea::placeholder { color: var(--text-3); }
+    .input-textarea:focus { background: rgba(0,0,0,0.3); }
+
+    .input-footer {
+      padding: 10px 14px; border-top: 1px solid var(--border-s);
+      display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+    }
+    .char-count { font-family: var(--mono); font-size: 10px; color: var(--text-3); flex: 1; }
+
+    /* File pane */
+    .drop-zone {
+      margin: 14px;
+      border: 1.5px dashed rgba(167,139,250,0.22);
+      padding: 32px 20px; text-align: center;
+      cursor: pointer; transition: border-color 0.18s, background 0.18s;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: rgba(167,139,250,0.5); background: rgba(167,139,250,0.04);
+    }
+    .drop-icon  { font-size: 28px; margin-bottom: 10px; opacity: 0.55; }
+    .drop-title { font-size: 14px; font-weight: 700; color: var(--text-1); margin-bottom: 4px; letter-spacing: -0.2px; }
+    .drop-hint  { font-family: var(--mono); font-size: 10px; color: var(--text-3); line-height: 1.6; }
+    .drop-btn {
+      display: inline-block; margin-top: 12px;
+      font-family: var(--mono); font-size: 10px; font-weight: 600;
+      color: var(--accent); border: 1px solid rgba(167,139,250,0.28);
+      padding: 6px 14px; cursor: pointer; background: transparent; transition: background 0.15s;
+    }
+    .drop-btn:hover { background: rgba(167,139,250,0.08); }
+
+    .loaded-file {
+      margin: 14px; padding: 12px 16px;
+      border: 1px solid var(--border); background: rgba(167,139,250,0.04);
+      display: none; align-items: center; gap: 12px;
+    }
+    .loaded-file.visible { display: flex; }
+    .loaded-file-icon { font-size: 20px; opacity: 0.6; }
+    .loaded-file-meta { flex: 1; min-width: 0; }
+    .loaded-file-name {
+      font-family: var(--mono); font-size: 11px; color: var(--text-1);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .loaded-file-size { font-family: var(--mono); font-size: 9px; color: var(--text-3); margin-top: 2px; }
+    .loaded-file-remove {
+      font-family: var(--mono); font-size: 10px; color: var(--text-3);
+      background: none; border: none; cursor: pointer; transition: color 0.15s; flex-shrink: 0;
+    }
+    .loaded-file-remove:hover { color: var(--danger); }
+
+    /* ── Right column ── */
+    .right-col { display: flex; flex-direction: column; }
+    .output-panel { display: flex; flex-direction: column; overflow: hidden; }
+
+    .validation-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 16px; min-height: 36px;
+      border-bottom: 1px solid var(--border-s); flex-shrink: 0;
+    }
+    .badge-valid {
+      font-family: var(--mono); font-size: 10px; font-weight: 600;
+      color: var(--free); display: flex; align-items: center; gap: 6px;
+    }
+    .badge-valid::before { content: '✓'; }
+    .badge-invalid {
+      font-family: var(--mono); font-size: 10px; font-weight: 600;
+      color: var(--danger); display: flex; align-items: center; gap: 6px;
+    }
+    .badge-invalid::before { content: '✗'; }
+
+    .output-body {
+      height: 300px; overflow-y: auto;
+      display: flex; flex-direction: column;
+    }
+    .output-empty {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 10px; color: var(--text-3);
+      font-family: var(--mono); font-size: 11px;
+    }
+    .output-empty-icon { font-size: 32px; opacity: 0.25; }
+
+    .error-display { padding: 20px 16px; display: none; }
+    .error-display.visible { display: block; }
+    .error-msg {
+      font-family: var(--mono); font-size: 11px;
+      color: var(--danger); line-height: 1.6; white-space: pre-wrap;
+    }
+
+    /* Plain-text output - break-all for encoded Base64, pre-wrap for decoded */
+    .code-area {
+      padding: 16px;
+      font-family: var(--mono); font-size: 12px; line-height: 1.75;
+      white-space: pre-wrap; word-break: break-all;
+      color: var(--text-1); display: none;
+    }
+    .code-area.visible { display: block; }
+    .code-area.decoded { word-break: break-word; }
+
+    .output-footer {
+      padding: 8px 16px; border-top: 1px solid var(--border-s);
+      display: flex; align-items: center; gap: 16px; flex-shrink: 0;
+    }
+    .output-stat { font-family: var(--mono); font-size: 10px; color: var(--text-3); }
+    .output-stat .val { color: var(--text-2); }
+
+    @media (max-width: 1000px) {
+      .tool-layout { grid-template-columns: 1fr !important; padding: 8px 16px; }
+      .panel-resizer { display: none; }
+      .right-col { margin-top: 8px; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="bg-layer dot-grid" aria-hidden="true">
+    <div class="blob blob-tool-1"></div>
+    <div class="blob blob-tool-2"></div>
+    <div class="blob blob-tool-3"></div>
+  </div>
+
+  <!-- Nav header -->
+  <header class="header-tool">
+    <div class="header-inner">
+      <a class="back-link" href="../index.html">&larr; All tools</a>
+      <div class="header-sep"></div>
+      <a href="../index.html">
+        <img src="/assets/logo-horizontal.svg" alt="PrivBatch" height="32">
+      </a>
+      <span class="tool-crumb" aria-label="Current tool: Base64">
+        <span class="sep">/</span>
+        <span class="name">Base64</span>
+      </span>
+      <div class="h-spacer"></div>
+      <div class="privacy-badge badge-inline">
+        <div class="dot" aria-hidden="true"></div>
+        100% offline
+      </div>
+      <input class="license-input" id="license-input" type="text"
+             placeholder="&#128273; license key" aria-label="License key">
+      <span class="license-unlocked" aria-live="polite"></span>
+    </div>
+  </header>
+
+  <!-- Tool title bar -->
+  <div class="tool-header">
+    <div class="tool-header-inner">
+      <span class="tool-title">
+        Base64 Encoder <span class="tool-title-and">&amp;</span> Decoder
+      </span>
+      <div class="tool-header-spacer"></div>
+      <span class="tool-badge-free">Free tool</span>
+    </div>
+  </div>
+
+  <!-- Options toolbar -->
+  <div class="settings-bar">
+    <div class="sbar-group">
+      <span class="sbar-label">Mode:</span>
+      <div class="sbar-toggle">
+        <button class="sbar-mode-btn active" id="mode-encode">Encode</button>
+        <div class="sbar-mode-sep"></div>
+        <button class="sbar-mode-btn" id="mode-decode">Decode</button>
+      </div>
+    </div>
+    <div class="sbar-sep"></div>
+    <div class="sbar-group">
+      <span class="sbar-label">Variant:</span>
+      <select class="sbar-select" id="variant-select">
+        <option value="standard">Standard</option>
+        <option value="urlsafe">URL-safe</option>
+      </select>
+    </div>
+    <div class="sbar-sep"></div>
+    <div class="sbar-group">
+      <span class="sbar-label">Auto-detect</span>
+      <div class="sbar-pill" id="tog-auto"
+           role="switch" aria-checked="true" tabindex="0"
+           aria-label="Auto-detect encode or decode mode"></div>
+    </div>
+    <!-- GS buttons injected by gold-standard.js -->
+  </div>
+
+  <!-- Split layout -->
+  <div class="tool-layout" id="tool-layout">
+
+    <!-- ═══ LEFT PANEL ═══ -->
+    <div class="glass-panel left-panel">
+
+      <div class="left-tabs" role="tablist">
+        <button class="left-tab active" id="tab-paste" role="tab"
+                aria-selected="true" aria-controls="pane-paste">&#128203; Paste</button>
+        <button class="left-tab" id="tab-file" role="tab"
+                aria-selected="false" aria-controls="pane-file">&#128193; File</button>
+        <button class="left-tab" id="tab-sample" role="tab"
+                aria-selected="false">&#9889; Sample</button>
+      </div>
+
+      <!-- Paste pane -->
+      <div class="left-tab-content active" id="pane-paste"
+           role="tabpanel" aria-labelledby="tab-paste">
+        <textarea class="input-textarea" id="text-input"
+          placeholder="Paste text or Base64 to encode/decode…"
+          spellcheck="false" autocomplete="off"
+          aria-label="Text or Base64 input"></textarea>
+        <div class="input-footer">
+          <span class="char-count" id="char-count">0 characters</span>
+          <button class="btn-secondary" id="clear-btn">Clear</button>
+        </div>
+      </div>
+
+      <!-- File pane -->
+      <div class="left-tab-content" id="pane-file"
+           role="tabpanel" aria-labelledby="tab-file">
+        <div class="drop-zone" id="drop-zone" role="button"
+             tabindex="0" aria-label="Drop any file to encode to Base64">
+          <div class="drop-icon" aria-hidden="true">&#8659;</div>
+          <div class="drop-title">Drop any file here</div>
+          <p class="drop-hint">File is encoded to Base64 - any type accepted</p>
+          <button class="drop-btn" id="browse-btn" type="button">Browse file</button>
+        </div>
+        <div class="loaded-file" id="loaded-file">
+          <div class="loaded-file-icon" aria-hidden="true">&#128196;</div>
+          <div class="loaded-file-meta">
+            <div class="loaded-file-name" id="loaded-name"> - </div>
+            <div class="loaded-file-size" id="loaded-size"> - </div>
+          </div>
+          <button class="loaded-file-remove" id="loaded-remove"
+                  aria-label="Remove file">&#10005; Remove</button>
+        </div>
+        <input type="file" id="file-input" style="display:none" aria-hidden="true">
+      </div>
+
+    </div><!-- /left-panel -->
+
+    <!-- ═══ RESIZER ═══ -->
+    <div class="panel-resizer" id="panel-resizer" aria-hidden="true"></div>
+
+    <!-- ═══ RIGHT PANEL ═══ -->
+    <div class="right-col">
+      <div class="glass-panel output-panel">
+
+        <div class="panel-header">
+          <span class="panel-title panel-title-accent">Output</span>
+          <div class="panel-spacer"></div>
+          <button class="panel-action" id="copy-btn" aria-label="Copy output">Copy</button>
+          <button class="panel-action" id="expand-btn" aria-label="Expand output">Expand &#8597;</button>
+        </div>
+
+        <div class="validation-row" id="validation-row" aria-live="polite"></div>
+
+        <div class="output-body" id="output-body">
+          <div class="output-empty" id="output-empty">
+            <div class="output-empty-icon" aria-hidden="true">&#128272;</div>
+            Paste text or drop a file to begin
+          </div>
+          <div class="error-display" id="error-display" role="alert"></div>
+          <div class="code-area" id="code-area" aria-label="Encoded or decoded output"></div>
+        </div>
+
+        <div class="output-footer">
+          <span class="output-stat">Input: <span class="val" id="stat-in"> - </span></span>
+          <span class="output-stat">Output: <span class="val" id="stat-out"> - </span></span>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /tool-layout -->
+
+  <!-- Footer -->
+  <footer class="footer-tool">
+    <div class="footer-inner">
+      <span>© 2026 PrivBatch</span>
+      <a href="../privacy.html">Privacy</a>
+      <a href="../changelog.html">Changelog</a>
+      <a href="../licence.html">Licence</a>
+      <span class="footer-note">All processing is local - zero uploads, zero logs</span>
+    </div>
+  </footer>
+
+  <!-- GS overlays injected by gold-standard.js -->
+
+  <script src="../js/license.js"></script>
+  <script>
+  (function () {
+    'use strict';
+
+    const $ = id => document.getElementById(id);
+
+    /* ════════ DOM ════════ */
+    const DOM = {
+      textInput:     $('text-input'),
+      charCount:     $('char-count'),
+      clearBtn:      $('clear-btn'),
+      tabPaste:      $('tab-paste'),
+      tabFile:       $('tab-file'),
+      tabSample:     $('tab-sample'),
+      panePaste:     $('pane-paste'),
+      paneFile:      $('pane-file'),
+      dropZone:      $('drop-zone'),
+      browseBtn:     $('browse-btn'),
+      fileInput:     $('file-input'),
+      loadedFile:    $('loaded-file'),
+      loadedName:    $('loaded-name'),
+      loadedSize:    $('loaded-size'),
+      loadedRemove:  $('loaded-remove'),
+      modeEncode:    $('mode-encode'),
+      modeDecode:    $('mode-decode'),
+      variantSelect: $('variant-select'),
+      togAuto:       $('tog-auto'),
+      validationRow: $('validation-row'),
+      outputBody:    $('output-body'),
+      outputEmpty:   $('output-empty'),
+      errorDisplay:  $('error-display'),
+      codeArea:      $('code-area'),
+      copyBtn:       $('copy-btn'),
+      expandBtn:     $('expand-btn'),
+      statIn:        $('stat-in'),
+      statOut:       $('stat-out'),
+      layout:        $('tool-layout'),
+    };
+
+    /* ════════ STATE ════════ */
+    const state = {
+      raw:        '',
+      mode:       'encode',   // 'encode' | 'decode'
+      urlSafe:    false,
+      autoDetect: true,
+      expanded:   false,
+    };
+
+    /* ════════ UTILS ════════ */
+    function fmtSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    function esc(s) {
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    /* ════════ BASE64 LOGIC ════════ */
+    function toUrlSafe(b64) {
+      return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    }
+
+    function fromUrlSafe(b64) {
+      return b64.replace(/-/g, '+').replace(/_/g, '/');
+    }
+
+    function normalizeB64(s) {
+      // Strip whitespace, restore URL-safe chars, re-pad
+      s = s.replace(/\s/g, '');
+      s = fromUrlSafe(s);
+      const rem = s.length % 4;
+      if (rem) s += '='.repeat(4 - rem);
+      return s;
+    }
+
+    function encodeText(text, urlSafe) {
+      // Unicode-safe encode
+      const b64 = btoa(unescape(encodeURIComponent(text)));
+      return urlSafe ? toUrlSafe(b64) : b64;
+    }
+
+    function decodeBase64(raw, urlSafe) {
+      // Unicode-safe decode
+      const normalized = normalizeB64(raw);
+      return decodeURIComponent(escape(atob(normalized)));
+    }
+
+    function encodeArrayBuffer(buffer, urlSafe) {
+      const bytes = new Uint8Array(buffer);
+      let binary = '';
+      const chunk = 8192;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+      }
+      const b64 = btoa(binary);
+      return urlSafe ? toUrlSafe(b64) : b64;
+    }
+
+    function looksLikeBase64(text) {
+      const s = text.trim().replace(/\s/g, '');
+      if (s.length < 4) return false;
+      // Must be all valid Base64 chars (standard or URL-safe)
+      if (!/^[A-Za-z0-9+/\-_=]+$/.test(s)) return false;
+      // Try to actually decode it
+      try {
+        atob(normalizeB64(s));
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    /* ════════ PROCESS ════════ */
+    function process(text) {
+      state.raw = text;
+      DOM.charCount.textContent = text.length === 0
+        ? '0 characters'
+        : text.length.toLocaleString() + ' characters';
+
+      if (!text.trim()) {
+        renderEmpty();
+        return;
+      }
+
+      // Auto-detect: switch mode based on input
+      if (state.autoDetect) {
+        const detected = looksLikeBase64(text) ? 'decode' : 'encode';
+        if (detected !== state.mode) setMode(detected, /* silent */ true);
+      }
+
+      if (state.mode === 'encode') {
+        try {
+          const output = encodeText(text, state.urlSafe);
+          renderValid('Encoded');
+          renderOutput(output, false);
+          updateStats(text, output);
+        } catch (e) {
+          renderError('Encoding failed: ' + e.message);
+        }
+      } else {
+        try {
+          const output = decodeBase64(text, state.urlSafe);
+          renderValid('Valid Base64');
+          renderOutput(output, true);
+          updateStats(text, output);
+        } catch {
+          DOM.validationRow.innerHTML = '<span class="badge-invalid">Invalid Base64</span>';
+          DOM.outputEmpty.style.display = 'none';
+          DOM.codeArea.className = 'code-area';
+          DOM.errorDisplay.innerHTML =
+            '<div class="error-msg">Input is not valid Base64.\n' +
+            'Check for invalid characters or incorrect padding.</div>';
+          DOM.errorDisplay.className = 'error-display visible';
+          DOM.statIn.textContent  = fmtSize(new Blob([text]).size);
+          DOM.statOut.textContent = ' - ';
+        }
+      }
+    }
+
+    function renderEmpty() {
+      DOM.validationRow.innerHTML = '';
+      DOM.outputEmpty.innerHTML =
+        '<div class="output-empty-icon" aria-hidden="true">&#128272;</div>' +
+        'Paste text or drop a file to begin';
+      DOM.outputEmpty.style.display = 'flex';
+      DOM.errorDisplay.className = 'error-display';
+      DOM.codeArea.className = 'code-area';
+      DOM.statIn.textContent  = ' - ';
+      DOM.statOut.textContent = ' - ';
+    }
+
+    function renderValid(label) {
+      DOM.validationRow.innerHTML = `<span class="badge-valid">${esc(label)}</span>`;
+    }
+
+    function renderOutput(text, isDecoded) {
+      DOM.outputEmpty.style.display = 'none';
+      DOM.errorDisplay.className = 'error-display';
+      DOM.codeArea.textContent = text;
+      DOM.codeArea.className = 'code-area visible' + (isDecoded ? ' decoded' : '');
+    }
+
+    function renderError(msg) {
+      DOM.validationRow.innerHTML = '<span class="badge-invalid">Error</span>';
+      DOM.outputEmpty.style.display = 'none';
+      DOM.codeArea.className = 'code-area';
+      DOM.errorDisplay.innerHTML = `<div class="error-msg">${esc(msg)}</div>`;
+      DOM.errorDisplay.className = 'error-display visible';
+    }
+
+    function updateStats(input, output) {
+      DOM.statIn.textContent  = fmtSize(new Blob([input]).size);
+      DOM.statOut.textContent = fmtSize(new Blob([output]).size);
+    }
+
+    function reprocess() { process(state.raw); }
+
+    /* ════════ TOOLBAR ════════ */
+    function setMode(mode, silent) {
+      state.mode = mode;
+      DOM.modeEncode.classList.toggle('active', mode === 'encode');
+      DOM.modeDecode.classList.toggle('active', mode === 'decode');
+      if (!silent) reprocess();
+    }
+
+    DOM.modeEncode.addEventListener('click', () => setMode('encode'));
+    DOM.modeDecode.addEventListener('click', () => setMode('decode'));
+
+    DOM.variantSelect.addEventListener('change', () => {
+      state.urlSafe = DOM.variantSelect.value === 'urlsafe';
+      reprocess();
+    });
+
+    function toggleAuto() {
+      state.autoDetect = !state.autoDetect;
+      DOM.togAuto.classList.toggle('off', !state.autoDetect);
+      DOM.togAuto.setAttribute('aria-checked', String(state.autoDetect));
+      if (state.autoDetect) reprocess();
+    }
+    DOM.togAuto.addEventListener('click', toggleAuto);
+    DOM.togAuto.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleAuto(); }
+    });
+
+    /* ════════ INPUT ════════ */
+    let debounceTimer;
+    DOM.textInput.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => process(DOM.textInput.value), 120);
+    });
+
+    DOM.clearBtn.addEventListener('click', () => {
+      DOM.textInput.value = '';
+      process('');
+      DOM.textInput.focus();
+    });
+
+    /* ════════ TABS ════════ */
+    function switchPane(tabId, paneId) {
+      ['tab-paste', 'tab-file', 'tab-sample'].forEach(id => {
+        const t = $(id);
+        if (t) { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); }
+      });
+      document.querySelectorAll('.left-tab-content').forEach(p => p.classList.remove('active'));
+      const tab  = $(tabId);  if (tab)  { tab.classList.add('active');  tab.setAttribute('aria-selected', 'true'); }
+      const pane = $(paneId); if (pane) pane.classList.add('active');
+    }
+
+    DOM.tabPaste.addEventListener('click',  () => switchPane('tab-paste', 'pane-paste'));
+    DOM.tabFile.addEventListener('click',   () => switchPane('tab-file',  'pane-file'));
+    DOM.tabSample.addEventListener('click', () => {
+      DOM.textInput.value = SAMPLE_TEXT;
+      switchPane('tab-paste', 'pane-paste');
+      process(SAMPLE_TEXT);
+    });
+
+    /* ════════ FILE HANDLING ════════ */
+    DOM.browseBtn.addEventListener('click', e => { e.stopPropagation(); DOM.fileInput.click(); });
+    DOM.dropZone.addEventListener('click', () => DOM.fileInput.click());
+    DOM.dropZone.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); DOM.fileInput.click(); }
+    });
+    DOM.dropZone.addEventListener('dragover',  e => { e.preventDefault(); DOM.dropZone.classList.add('drag-over'); });
+    DOM.dropZone.addEventListener('dragleave', () => DOM.dropZone.classList.remove('drag-over'));
+    DOM.dropZone.addEventListener('drop', e => {
+      e.preventDefault(); DOM.dropZone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file) loadFile(file);
+    });
+    DOM.fileInput.addEventListener('change', () => {
+      if (DOM.fileInput.files[0]) loadFile(DOM.fileInput.files[0]);
+      DOM.fileInput.value = '';
+    });
+    DOM.loadedRemove.addEventListener('click', () => {
+      DOM.loadedFile.classList.remove('visible');
+      DOM.dropZone.style.display = '';
+      state.raw = '';
+      renderEmpty();
+      switchPane('tab-file', 'pane-file');
+    });
+
+    function loadFile(file) {
+      DOM.loadedName.textContent = file.name;
+      DOM.loadedSize.textContent = fmtSize(file.size);
+      DOM.loadedFile.classList.add('visible');
+      DOM.dropZone.style.display = 'none';
+
+      // Always encode files (files are binary, decoding doesn't make sense here)
+      setMode('encode', true);
+
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const b64 = encodeArrayBuffer(ev.target.result, state.urlSafe);
+        state.raw = b64; // store encoded result as "raw" for copy/reprocess
+        renderValid('Encoded');
+        renderOutput(b64, false);
+        DOM.statIn.textContent  = fmtSize(file.size);
+        DOM.statOut.textContent = fmtSize(new Blob([b64]).size);
+      };
+      reader.onerror = () => renderError('Failed to read file.');
+      reader.readAsArrayBuffer(file);
+
+      switchPane('tab-paste', 'pane-paste');
+    }
+
+    /* ════════ COPY ════════ */
+    DOM.copyBtn.addEventListener('click', async () => {
+      const text = DOM.codeArea.textContent;
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(text);
+        DOM.copyBtn.textContent = 'Copied!';
+        setTimeout(() => { DOM.copyBtn.textContent = 'Copy'; }, 1500);
+      } catch (_) {}
+    });
+
+    /* ════════ EXPAND ════════ */
+    DOM.expandBtn.addEventListener('click', () => {
+      state.expanded = !state.expanded;
+      DOM.outputBody.style.height = state.expanded ? '650px' : '300px';
+      DOM.expandBtn.textContent = state.expanded ? 'Collapse ↕' : 'Expand ↕';
+    });
+
+    /* ════════ PANEL RESIZER ════════ */
+    (function () {
+      const resizer = $('panel-resizer');
+      const layout  = $('tool-layout');
+      let startX, startW, dragging = false;
+      resizer.addEventListener('mousedown', e => {
+        startX   = e.clientX;
+        startW   = parseInt(getComputedStyle(layout).getPropertyValue('--left-w') || '420', 10);
+        dragging = true;
+        document.body.style.cursor     = 'col-resize';
+        document.body.style.userSelect = 'none';
+      });
+      document.addEventListener('mousemove', e => {
+        if (!dragging) return;
+        const newW = Math.min(700, Math.max(260, startW + e.clientX - startX));
+        layout.style.setProperty('--left-w', newW + 'px');
+      });
+      document.addEventListener('mouseup', () => {
+        if (!dragging) return;
+        dragging = false;
+        document.body.style.cursor     = '';
+        document.body.style.userSelect = '';
+      });
+    })();
+
+    /* ════════ SAMPLE DATA ════════ */
+    // A JSON string with unicode - demonstrates unicode-safe encode well
+    const SAMPLE_TEXT = '{"user":"Alice Müller","id":42,"roles":["admin","editor"],"active":true}';
+
+    /* ════════ INIT ════════ */
+    LicenseManager.init();
+
+  })();
+
+
+  /* ════════ GOLD STANDARD INIT ════════ */
+  GoldStandard.init({
+    toolName : 'Base64 Encode/Decode',
+    tier     : 'free',
+    onConvert : null,
+    onDownload: null,
+    shortcuts: [
+      { keys: ['Ctrl', 'Enter'], desc: 'Encode / decode'    },
+      { keys: ['Ctrl', 'S'],     desc: 'Download output'    },
+      { keys: ['Ctrl', 'K'],     desc: 'Open tool switcher' },
+      { keys: ['Escape'],        desc: 'Close overlay'      },
+      { keys: ['?'],             desc: 'Toggle shortcuts'   },
+    ],
+  });
+  </script>
+  <script src="../js/oss-page-chrome.js"></script>
+</body>
+</html>

@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/assets/icon-192.png">
+  <title>JSON Query - Free, Private, Offline | PrivBatch</title>
+  <meta name="description" content="Query JSON with JSONPath expressions. Live results as you type. Runs 100% in your browser - no uploads, no accounts.">
+  <link rel="canonical" href="https://privbatch.com/tools/json-query.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/light-mode.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jsonpath/1.1.1/jsonpath.min.js"></script>
+  <script src="../js/config.js"></script>
+  <script src="../js/gold-standard.js"></script>
+  <style>
+    body { display: flex; flex-direction: column; min-height: 100vh; box-sizing: border-box; }
+    .tool-header { position: relative; z-index: 1; background: var(--bg); border-bottom: 1px solid var(--border-s); flex-shrink: 0; }
+    .tool-header-inner { max-width: 1400px; margin: 0 auto; padding: 10px 24px; display: flex; align-items: center; gap: 16px; }
+    .tool-title { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; color: var(--text-1); }
+    .tool-header-spacer { flex: 1; }
+    .tool-badge-free { font-family: var(--mono); font-size: 9px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--free); display: flex; align-items: center; gap: 5px; }
+    .tool-badge-free::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--free); }
+    .settings-bar { position: relative; z-index: 96; background: rgba(22,19,34,0.98); border-bottom: 1px solid var(--border); padding: 0 24px; height: 44px; display: flex; align-items: center; gap: 16px; overflow: visible; flex-shrink: 0; }
+    .sbar-group  { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+    .sbar-label  { font-family: var(--mono); font-size: 10px; color: var(--text-3); white-space: nowrap; }
+    .sbar-sep    { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
+    .sbar-badge  { font-family: var(--mono); font-size: 9px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--free); }
+    .sbar-btn { font-family: var(--mono); font-size: 10px; font-weight: 600; padding: 4px 10px; cursor: pointer; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-3); transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
+    .sbar-btn:hover { color: var(--text-1); border-color: rgba(167,139,250,0.4); }
+    .sbar-btn.active { background: rgba(167,139,250,0.15); color: var(--accent); border-color: rgba(167,139,250,0.4); }
+    .sbar-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .tool-layout { display: grid; grid-template-columns: var(--left-w, 460px) 8px 1fr; max-width: 1400px; width: 100%; margin: 0 auto; padding: 12px 24px; box-sizing: border-box; gap: 0; align-items: stretch; position: relative; z-index: 1; }
+    .panel-resizer { display: flex; align-items: flex-start; justify-content: center; padding-top: 20px; cursor: col-resize; user-select: none; z-index: 10; }
+    .panel-resizer::after { content: ''; width: 2px; height: 32px; background: var(--border); border-radius: 1px; transition: background 0.15s; }
+    .panel-resizer:hover::after { background: rgba(167,139,250,0.4); }
+    .left-panel { display: flex; flex-direction: column; overflow: hidden; }
+    .right-col  { display: flex; flex-direction: column; }
+
+    /* Input panel */
+    .panel-hdr { padding: 10px 14px; border-bottom: 1px solid var(--border-s); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .panel-title-accent { font-size: 12px; font-weight: 700; color: var(--accent); }
+    .panel-spacer { flex: 1; }
+    .panel-action { font-family: var(--mono); font-size: 10px; font-weight: 600; padding: 4px 10px; cursor: pointer; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-3); transition: all 0.15s; white-space: nowrap; }
+    .panel-action:hover { color: var(--text-1); border-color: rgba(167,139,250,0.4); }
+    .panel-action:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .json-textarea { flex: 1; width: 100%; box-sizing: border-box; resize: none; font-family: var(--mono); font-size: 11px; line-height: 1.65; color: var(--text-1); background: transparent; border: none; outline: none; padding: 10px 14px; min-height: 260px; }
+    .valid-row { padding: 5px 14px; font-family: var(--mono); font-size: 10px; border-top: 1px solid var(--border-s); flex-shrink: 0; }
+    .valid-row.ok  { color: #2DD4BF; }
+    .valid-row.err { color: #EF4444; }
+    .valid-row.dim { color: var(--text-3); }
+
+    /* Query bar */
+    .query-bar { padding: 10px 14px; border-top: 1px solid var(--border-s); flex-shrink: 0; }
+    .query-bar-inner { display: flex; align-items: center; gap: 8px; }
+    .query-prefix { font-family: var(--mono); font-size: 12px; color: var(--text-3); flex-shrink: 0; }
+    .query-input { flex: 1; font-family: var(--mono); font-size: 12px; background: rgba(167,139,250,0.06); border: 1px solid rgba(167,139,250,0.25); border-radius: 6px; color: var(--text-1); padding: 7px 10px; outline: none; transition: border-color 0.15s; }
+    .query-input:focus { border-color: rgba(167,139,250,0.5); }
+    .query-input::placeholder { color: var(--text-3); }
+    .query-run-btn { font-family: var(--mono); font-size: 10px; font-weight: 600; padding: 7px 14px; cursor: pointer; border: 1px solid rgba(167,139,250,0.35); border-radius: 6px; background: rgba(167,139,250,0.12); color: var(--accent); transition: all 0.15s; white-space: nowrap; }
+    .query-run-btn:hover { background: rgba(167,139,250,0.2); }
+
+    /* Example chips */
+    .chips-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .chip { font-family: var(--mono); font-size: 10px; padding: 3px 9px; border-radius: 5px; background: rgba(167,139,250,0.08); border: 1px solid rgba(167,139,250,0.2); color: var(--text-3); cursor: pointer; transition: all 0.15s; }
+    .chip:hover { background: rgba(167,139,250,0.15); color: var(--accent); border-color: rgba(167,139,250,0.4); }
+    .chip-label { font-size: 9px; color: var(--text-3); font-family: var(--mono); align-self: center; }
+
+    /* Output panel */
+    .output-panel { display: flex; flex-direction: column; overflow: hidden; min-height: 400px; }
+    .result-count { font-family: var(--mono); font-size: 10px; color: var(--text-3); }
+    .result-count .val { color: var(--text-2); font-weight: 600; }
+    .result-count .accent { color: var(--accent); }
+
+    .output-body { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+    .output-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: var(--text-3); font-family: var(--mono); font-size: 11px; padding: 40px 0; }
+    .output-empty-icon { font-size: 32px; opacity: 0.25; }
+
+    /* Results */
+    .result-list { padding: 6px 0; }
+    .result-item { display: flex; align-items: flex-start; gap: 0; border-bottom: 1px solid rgba(167,139,250,0.05); }
+    .result-item:last-child { border-bottom: none; }
+    .result-idx { width: 38px; flex-shrink: 0; font-family: var(--mono); font-size: 10px; color: var(--text-3); padding: 8px 6px 8px 14px; line-height: 1.5; user-select: none; text-align: right; }
+    .result-val { flex: 1; font-family: var(--mono); font-size: 11px; line-height: 1.6; padding: 7px 14px 7px 6px; white-space: pre-wrap; word-break: break-all; color: var(--text-1); }
+    .result-val.type-string  { color: #86EFAC; }
+    .result-val.type-number  { color: #93C5FD; }
+    .result-val.type-boolean { color: #F9A8D4; }
+    .result-val.type-null    { color: var(--text-3); font-style: italic; }
+    .result-val.type-object  { color: var(--text-2); }
+    .result-item-copy { font-family: var(--mono); font-size: 9px; color: var(--text-3); background: none; border: none; cursor: pointer; padding: 8px 10px; flex-shrink: 0; opacity: 0; transition: opacity 0.15s; }
+    .result-item:hover .result-item-copy { opacity: 1; }
+    .result-item-copy:hover { color: var(--accent); }
+
+    /* Path display */
+    .result-path { font-family: var(--mono); font-size: 9px; color: var(--text-3); padding: 0 14px 4px 58px; }
+
+    /* Error display */
+    .query-error { margin: 12px 14px; padding: 9px 12px; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); border-radius: 6px; font-family: var(--mono); font-size: 11px; color: #EF4444; }
+
+    .output-footer { padding: 8px 14px; border-top: 1px solid var(--border-s); display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+    .output-stat { font-family: var(--mono); font-size: 10px; color: var(--text-3); }
+    .output-stat .val { color: var(--text-2); }
+
+    /* Stats bar */
+    .stats-bar { font-family: var(--mono); font-size: 10px; color: var(--free); padding: 5px 16px; display: none; flex-shrink: 0; animation: stats-in 0.25s ease-out; border-top: 1px solid rgba(45,212,191,0.15); background: rgba(45,212,191,0.04); }
+    .stats-bar.visible { display: block; }
+    @keyframes stats-in { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Gold Standard chrome (Recent, Prove It, Shortcuts, Switcher) injected by gold-standard.js */
+    button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    @media (max-width: 1000px) { .tool-layout { grid-template-columns: 1fr !important; padding: 8px 16px; } .panel-resizer { display: none; } .right-col { margin-top: 8px; } }
+  </style>
+</head>
+<body>
+
+<div class="bg-layer dot-grid" aria-hidden="true">
+  <div class="blob blob-tool-1"></div>
+  <div class="blob blob-tool-2"></div>
+  <div class="blob blob-tool-3"></div>
+</div>
+
+<header class="header-tool">
+  <div class="header-inner">
+    <a class="back-link" href="../index.html">&larr; All tools</a>
+    <div class="header-sep"></div>
+    <a href="../index.html"><img src="/assets/logo-horizontal.svg" alt="PrivBatch" height="32"></a>
+    <span class="tool-crumb" aria-label="Current tool: JSON Query">
+      <span class="sep">/</span><span class="name">JSON Query</span>
+    </span>
+    <div class="h-spacer"></div>
+    <div class="privacy-badge badge-inline"><div class="dot" aria-hidden="true"></div>100% offline</div>
+    <input class="license-input" id="license-input" type="text" placeholder="&#128273; license key" aria-label="License key">
+    <span class="license-unlocked" aria-live="polite"></span>
+  </div>
+</header>
+
+<div class="tool-header">
+  <div class="tool-header-inner">
+    <span class="tool-title">$. JSON Query</span>
+    <div class="tool-header-spacer"></div>
+    <span class="tool-badge-free">Free Tool · No Limits</span>
+  </div>
+</div>
+
+<div class="settings-bar">
+  <div class="sbar-group">
+    <span class="sbar-badge">LIVE</span>
+    <span class="sbar-label">results update as you type</span>
+  </div>
+  <!-- GS buttons (Recent, Prove It, Shortcuts) injected by gold-standard.js -->
+</div>
+
+<div class="tool-layout" id="tool-layout">
+
+  <!-- LEFT: JSON input -->
+  <div class="glass-panel left-panel">
+    <div class="panel-hdr">
+      <span class="panel-title-accent">JSON Input</span>
+      <div class="panel-spacer"></div>
+      <button class="panel-action" id="btn-sample">Sample</button>
+      <button class="panel-action" id="btn-format">Format</button>
+      <button class="panel-action" id="btn-clear">Clear</button>
+    </div>
+
+    <textarea class="json-textarea" id="json-ta"
+      placeholder='Paste JSON here…&#10;&#10;Example:&#10;{"users": [{"name": "Alice", "email": "alice@example.com"}]}'
+      spellcheck="false"></textarea>
+
+    <div class="valid-row dim" id="valid-row">Ready</div>
+
+    <!-- Query bar -->
+    <div class="query-bar">
+      <div class="query-bar-inner">
+        <span class="query-prefix">$</span>
+        <input class="query-input" id="query-input" type="text"
+               placeholder='.users[*].name' aria-label="JSONPath expression" autocomplete="off" spellcheck="false">
+        <button class="query-run-btn" id="btn-run">Run ↵</button>
+      </div>
+      <div class="chips-wrap">
+        <span class="chip-label">Examples:</span>
+        <button class="chip" data-expr="$.users[*].email">$.users[*].email</button>
+        <button class="chip" data-expr="$..name">$..name</button>
+        <button class="chip" data-expr="$.users[0]">$.users[0]</button>
+        <button class="chip" data-expr="$.users[*]">$.users[*]</button>
+        <button class="chip" data-expr="$.*">$.*</button>
+        <button class="chip" data-expr="$..id">$..id</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-resizer" id="panel-resizer" aria-hidden="true"></div>
+
+  <!-- RIGHT: Results -->
+  <div class="right-col">
+    <div class="glass-panel output-panel" id="output-panel">
+      <div class="panel-hdr">
+        <span class="panel-title-accent">Results</span>
+        <span class="result-count" id="result-count"></span>
+        <div class="panel-spacer"></div>
+        <button class="panel-action" id="copy-btn">Copy JSON</button>
+        <button class="panel-action" id="download-btn">Download</button>
+        <button class="panel-action" id="expand-btn">Expand &#8597;</button>
+      </div>
+
+      <div class="output-body" id="output-body" style="height:340px">
+        <div class="output-empty" id="output-empty">
+          <div class="output-empty-icon">$.</div>
+          Enter a JSONPath expression to query your JSON
+        </div>
+        <div id="query-error" class="query-error" style="display:none"></div>
+        <div class="result-list" id="result-list" style="display:none"></div>
+      </div>
+
+      <div class="output-footer">
+        <span class="output-stat" id="stat-size">-</span>
+        <span class="output-stat" id="stat-query">-</span>
+      </div>
+    </div>
+    <div class="stats-bar" id="stats-bar" aria-live="polite"></div>
+  </div>
+
+</div>
+
+<footer class="footer-tool">
+  <div class="footer-inner">
+    <span>© 2026 PrivBatch</span>
+    <a href="../privacy.html">Privacy</a>
+    <a href="../changelog.html">Changelog</a>
+    <a href="../licence.html">Licence</a>
+    <span class="footer-note">All processing is local - zero uploads, zero logs</span>
+  </div>
+</footer>
+
+<!-- GS overlays (Prove It, Shortcuts, Switcher) injected by gold-standard.js -->
+
+<script src="../js/license.js"></script>
+<script>
+(function () {
+  'use strict';
+  const $ = id => document.getElementById(id);
+
+  /* Network interception, Recent button, Prove It panel, Shortcuts overlay,
+     Tool switcher, and the Ctrl+Enter/Ctrl+S/Ctrl+K/Escape/? keyboard handlers
+     all live in gold-standard.js now - see GoldStandard.init() at end of file. */
+
+  const DOM = {
+    statsBar:    $('stats-bar'),
+    copyBtn:     $('copy-btn'),
+    downloadBtn: $('download-btn'),
+    expandBtn:   $('expand-btn'),
+    outputBody:  $('output-body'),
+    jsonTa:      $('json-ta'),
+    queryInput:  $('query-input'),
+    validRow:    $('valid-row'),
+    outputEmpty: $('output-empty'),
+    resultList:  $('result-list'),
+    queryError:  $('query-error'),
+    resultCount: $('result-count'),
+    statSize:    $('stat-size'),
+    statQuery:   $('stat-query'),
+  };
+
+  const state = { lastOutput: '', expanded: false, parsedJson: null, lastExpr: '' };
+
+  /* ── Native JSONPath fallback (if CDN fails) ── */
+  function nativeQuery(data, expr) {
+    /* Handle simple dotpath like $.foo.bar or $.arr[*].field */
+    if (expr === '$' || expr === '') return [data];
+    const path = expr.replace(/^\$/, '');
+    if (!path) return [data];
+
+    /* Recursive descent: $..field */
+    if (path.startsWith('..')) {
+      const field = path.slice(2).replace(/^\[|\]$/g, '').replace(/^\./, '');
+      const results = [];
+      function recurse(obj) {
+        if (obj === null || typeof obj !== 'object') return;
+        if (field in obj) results.push(obj[field]);
+        Object.values(obj).forEach(recurse);
+        if (Array.isArray(obj)) obj.forEach(recurse);
+      }
+      recurse(data);
+      return results;
+    }
+
+    /* Walk dot-notation or bracket segments */
+    const parts = [];
+    let rest = path;
+    while (rest) {
+      const m = rest.match(/^\.([a-zA-Z_$][a-zA-Z0-9_$]*|\*)/) ||
+                rest.match(/^\[(\d+|\*|'[^']*'|"[^"]*")\]/) ||
+                rest.match(/^\[(\*)\]/);
+      if (!m) break;
+      parts.push(m[1].replace(/^['"]|['"]$/g, ''));
+      rest = rest.slice(m[0].length);
+    }
+
+    function walk(cur, ps) {
+      if (!ps.length) return [cur];
+      const [head, ...tail] = ps;
+      if (head === '*') {
+        if (Array.isArray(cur)) return cur.flatMap(v => walk(v, tail));
+        if (cur && typeof cur === 'object') return Object.values(cur).flatMap(v => walk(v, tail));
+        return [];
+      }
+      const idx = parseInt(head, 10);
+      const next = Array.isArray(cur) && !isNaN(idx) ? cur[idx] : (cur && typeof cur === 'object' ? cur[head] : undefined);
+      if (next === undefined) return [];
+      return walk(next, tail);
+    }
+    return walk(data, parts);
+  }
+
+  /* ── Query execution ── */
+  function runQuery(silent) {
+    const raw = DOM.jsonTa.value.trim();
+    const expr = DOM.queryInput.value.trim();
+    if (!raw) { setEmpty(); return; }
+
+    /* Parse JSON */
+    let data;
+    try {
+      data = JSON.parse(raw);
+      state.parsedJson = data;
+      DOM.validRow.className = 'valid-row ok';
+      DOM.validRow.textContent = '✓ Valid JSON';
+    } catch (e) {
+      state.parsedJson = null;
+      DOM.validRow.className = 'valid-row err';
+      DOM.validRow.textContent = '✗ ' + e.message;
+      setEmpty(); return;
+    }
+
+    if (!expr) { setEmpty('Enter a JSONPath expression above'); return; }
+
+    const t0 = performance.now();
+    let results;
+    try {
+      if (window.jsonpath && typeof window.jsonpath.query === 'function') {
+        results = window.jsonpath.query(data, expr.startsWith('$') ? expr : '$' + expr);
+      } else {
+        results = nativeQuery(data, expr.startsWith('$') ? expr : '$' + expr);
+      }
+    } catch (e) {
+      DOM.outputEmpty.style.display = 'none';
+      DOM.queryError.style.display = 'block';
+      DOM.queryError.textContent = 'Query error: ' + e.message;
+      DOM.resultList.style.display = 'none';
+      DOM.resultCount.innerHTML = '';
+      state.lastOutput = '';
+      return;
+    }
+
+    DOM.queryError.style.display = 'none';
+    DOM.outputEmpty.style.display = 'none';
+
+    if (!results || !results.length) {
+      DOM.resultList.style.display = 'none';
+      DOM.resultCount.innerHTML = '<span style="color:var(--text-3)">0 results</span>';
+      DOM.outputEmpty.style.display = '';
+      DOM.outputEmpty.innerHTML = '<div class="output-empty-icon">∅</div>No matches for this expression';
+      state.lastOutput = '[]';
+      return;
+    }
+
+    /* Render results */
+    DOM.resultList.style.display = 'block';
+    DOM.resultList.innerHTML = results.map((val, i) => {
+      const formatted = typeof val === 'object' ? JSON.stringify(val, null, 2) : String(val);
+      const type = val === null ? 'null' : typeof val === 'string' ? 'string' : typeof val === 'number' ? 'number' : typeof val === 'boolean' ? 'boolean' : 'object';
+      const display = type === 'string' ? '"' + esc(val) + '"' : esc(formatted);
+      return `<div class="result-item">
+        <span class="result-idx">${i + 1}</span>
+        <span class="result-val type-${type}">${display}</span>
+        <button class="result-item-copy" data-val="${esc(formatted)}" title="Copy value">⧉</button>
+      </div>`;
+    }).join('');
+
+    /* Copy individual results */
+    DOM.resultList.querySelectorAll('.result-item-copy').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        try { await navigator.clipboard.writeText(btn.dataset.val); btn.textContent = '✓'; setTimeout(() => btn.textContent = '⧉', 1200); } catch(_) {}
+      });
+    });
+
+    const ms = Math.round(performance.now() - t0);
+    state.lastOutput = JSON.stringify(results, null, 2);
+    state.lastExpr = expr;
+
+    DOM.resultCount.innerHTML = `<span class="val accent">${results.length}</span> result${results.length > 1 ? 's' : ''}`;
+    DOM.statSize.innerHTML = `JSON <span class="val">${fmtSize(new Blob([raw]).size)}</span>`;
+    DOM.statQuery.innerHTML = `<span class="val">${ms}ms</span>`;
+
+    if (!silent) {
+      GoldStandard.History.save({ tool: 'JSON Query', timestamp: Date.now(), inputSize: raw.length, expr });
+      $('stats-bar').textContent = `Queried in ${ms}ms · ${results.length} result(s) · 0 bytes sent to any server`;
+      $('stats-bar').className = 'stats-bar visible';
+    }
+  }
+
+  function setEmpty(msg) {
+    DOM.outputEmpty.style.display = '';
+    DOM.outputEmpty.innerHTML = `<div class="output-empty-icon">$.</div>${msg || 'Enter a JSONPath expression to query your JSON'}`;
+    DOM.resultList.style.display = 'none';
+    DOM.queryError.style.display = 'none';
+    DOM.resultCount.innerHTML = '';
+    state.lastOutput = '';
+  }
+
+  /* ── Live query on input ── */
+  let liveTimer;
+  function scheduleLive() { clearTimeout(liveTimer); liveTimer = setTimeout(() => runQuery(true), 180); }
+  DOM.jsonTa.addEventListener('input', scheduleLive);
+  DOM.queryInput.addEventListener('input', scheduleLive);
+  $('btn-run').addEventListener('click', () => runQuery(false));
+
+  /* ── Validate JSON on paste ── */
+  DOM.jsonTa.addEventListener('input', () => {
+    const raw = DOM.jsonTa.value.trim();
+    if (!raw) { DOM.validRow.className = 'valid-row dim'; DOM.validRow.textContent = 'Ready'; return; }
+    try { JSON.parse(raw); DOM.validRow.className = 'valid-row ok'; DOM.validRow.textContent = '✓ Valid JSON'; }
+    catch(e) { DOM.validRow.className = 'valid-row err'; DOM.validRow.textContent = '✗ ' + e.message; }
+  });
+
+  /* ── Format JSON ── */
+  $('btn-format').addEventListener('click', () => {
+    try { const d = JSON.parse(DOM.jsonTa.value); DOM.jsonTa.value = JSON.stringify(d, null, 2); DOM.jsonTa.dispatchEvent(new Event('input')); } catch(_) {}
+  });
+
+  /* ── Example chips ── */
+  document.querySelectorAll('.chip[data-expr]').forEach(chip => {
+    chip.addEventListener('click', () => {
+      DOM.queryInput.value = chip.dataset.expr;
+      DOM.queryInput.focus();
+      runQuery(false);
+    });
+  });
+
+  /* ── Sample data ── */
+  const SAMPLE = {
+    users: [
+      { id: 1, name: 'Alice Smith',   email: 'alice@example.com',   role: 'admin',  age: 32 },
+      { id: 2, name: 'Bob Johnson',   email: 'bob@example.com',     role: 'editor', age: 28 },
+      { id: 3, name: 'Carol Williams',email: 'carol@example.com',   role: 'viewer', age: 41 },
+    ],
+    meta: { total: 3, page: 1, version: '2.0' }
+  };
+  $('btn-sample').addEventListener('click', () => {
+    DOM.jsonTa.value = JSON.stringify(SAMPLE, null, 2);
+    DOM.queryInput.value = '$.users[*].email';
+    DOM.jsonTa.dispatchEvent(new Event('input'));
+    runQuery(false);
+  });
+  $('btn-clear').addEventListener('click', () => {
+    DOM.jsonTa.value = ''; DOM.queryInput.value = '';
+    DOM.validRow.className = 'valid-row dim'; DOM.validRow.textContent = 'Ready';
+    setEmpty(); state.lastOutput = '';
+  });
+
+  /* ── Utilities ── */
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function fmtSize(b) { if (b < 1024) return b + ' B'; if (b < 1048576) return (b/1024).toFixed(1) + ' KB'; return (b/1048576).toFixed(1) + ' MB'; }
+  function downloadOutput() {
+    if (!state.lastOutput) return;
+    const blob = new Blob([state.lastOutput], { type: 'application/json' });
+    const url = URL.createObjectURL(blob); const a = document.createElement('a');
+    a.href = url; a.download = 'query-results.json'; a.click(); URL.revokeObjectURL(url);
+  }
+
+  /* ── Output panel buttons ── */
+  DOM.copyBtn.addEventListener('click', async () => {
+    if (!state.lastOutput) return;
+    try {
+      await navigator.clipboard.writeText(state.lastOutput);
+      DOM.copyBtn.textContent = 'Copied!';
+      DOM.copyBtn.style.color = '#2DD4BF';
+      DOM.copyBtn.style.borderColor = 'rgba(45,212,191,0.4)';
+      setTimeout(() => {
+        DOM.copyBtn.textContent = 'Copy JSON';
+        DOM.copyBtn.style.color = '';
+        DOM.copyBtn.style.borderColor = '';
+      }, 2000);
+    } catch (_) {}
+  });
+  DOM.downloadBtn.addEventListener('click', downloadOutput);
+  DOM.expandBtn.addEventListener('click', () => {
+    state.expanded = !state.expanded;
+    DOM.outputBody.style.height = state.expanded ? '650px' : '340px';
+    DOM.expandBtn.textContent = state.expanded ? 'Collapse ↕' : 'Expand ↕';
+  });
+
+  /* ── Resizable split panels ── */
+  (function () {
+    const resizer = $('panel-resizer'), layout = $('tool-layout');
+    let startX, startW, dragging = false;
+    resizer.addEventListener('mousedown', e => { startX = e.clientX; startW = parseInt(getComputedStyle(layout).getPropertyValue('--left-w') || '460', 10); dragging = true; document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; });
+    document.addEventListener('mousemove', e => { if (!dragging) return; layout.style.setProperty('--left-w', Math.min(700, Math.max(260, startW + e.clientX - startX)) + 'px'); });
+    document.addEventListener('mouseup', () => { if (!dragging) return; dragging = false; document.body.style.cursor = ''; document.body.style.userSelect = ''; });
+  })();
+
+  /* ── Tool-local key: Enter inside query input submits ── */
+  DOM.queryInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); runQuery(false); }
+  });
+
+  /* ── Init license + Gold Standard ── */
+  LicenseManager.init();
+
+  GoldStandard.init({
+    toolName  : 'JSON Query',
+    tier      : 'free',
+    onConvert : () => runQuery(false),
+    onDownload: downloadOutput,
+    onEscape  : () => {
+      DOM.jsonTa.value = '';
+      DOM.queryInput.value = '';
+      setEmpty();
+      DOM.validRow.className = 'valid-row dim';
+      DOM.validRow.textContent = 'Ready';
+    },
+    shortcuts: [
+      { keys: ['Ctrl', 'Enter'], desc: 'Run query' },
+      { keys: ['Ctrl', 'S'],     desc: 'Download results as JSON' },
+      { keys: ['Ctrl', 'K'],     desc: 'Open tool switcher' },
+      { keys: ['Escape'],        desc: 'Clear / close overlay' },
+      { keys: ['?'],             desc: 'Toggle shortcuts' },
+    ],
+  });
+
+})();
+</script>
+  <script src="../js/oss-page-chrome.js"></script>
+</body>
+</html>

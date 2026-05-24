@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/assets/icon-192.png">
+  <title>PrivBatch vs jsonformatter.org - Privacy-first alternative</title>
+  <meta name="description" content="An honest comparison of PrivBatch and jsonformatter.org. Both run in the browser. PrivBatch has 0 ads, 0 trackers, works fully offline, and never asks you to share JSON publicly.">
+  <link rel="canonical" href="https://privbatch.com/vs-jsonformatter.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/light-mode.css">
+  <style>
+    body { display: flex; flex-direction: column; min-height: 100vh; }
+
+    .vs-wrap {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 48px 28px 80px;
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .vs-eyebrow {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .vs-title {
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -0.6px;
+      color: var(--text-1);
+      margin-bottom: 10px;
+      line-height: 1.2;
+    }
+
+    .vs-tagline {
+      font-size: 15px;
+      color: var(--text-2);
+      line-height: 1.6;
+      margin-bottom: 44px;
+      max-width: 640px;
+    }
+
+    .vs-section { margin-bottom: 44px; }
+
+    .vs-section h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-1);
+      margin-bottom: 14px;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .vs-section h2::before {
+      content: '';
+      display: inline-block;
+      width: 3px;
+      height: 16px;
+      background: var(--accent);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .vs-section p {
+      font-size: 14px;
+      color: var(--text-2);
+      line-height: 1.75;
+      margin-bottom: 10px;
+    }
+
+    .vs-section ul {
+      padding-left: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .vs-section li {
+      font-size: 14px;
+      color: var(--text-2);
+      line-height: 1.65;
+    }
+
+    .vs-section li::before {
+      content: ' - ';
+      color: var(--text-3);
+      margin-right: 8px;
+      font-family: var(--mono);
+    }
+
+    /* Table */
+    .vs-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(167,139,250,0.03);
+    }
+
+    .vs-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .vs-table th {
+      text-align: left;
+      padding: 14px 16px;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      border-bottom: 1px solid var(--border);
+      background: rgba(167,139,250,0.04);
+    }
+
+    .vs-table td {
+      padding: 13px 16px;
+      vertical-align: top;
+      border-bottom: 1px solid var(--border-s);
+      color: var(--text-2);
+      line-height: 1.55;
+    }
+
+    .vs-table tr:last-child td { border-bottom: none; }
+
+    .vs-table td:first-child {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-1);
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      width: 30%;
+    }
+
+    .vs-row-pb td { background: rgba(45,212,191,0.05); }
+    .vs-row-pb td:first-child { color: #2DD4BF; }
+
+    .vs-row-comp td { background: rgba(239,68,68,0.04); }
+    .vs-row-comp td:first-child { color: #EF4444; }
+
+    .vs-row-mixed td { background: rgba(245,158,11,0.04); }
+    .vs-row-mixed td:first-child { color: #F59E0B; }
+
+    .vs-tag {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 9px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 4px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-right: 6px;
+    }
+    .vs-tag-pb { background: rgba(45,212,191,0.12); color: #2DD4BF; }
+    .vs-tag-comp { background: rgba(239,68,68,0.12); color: #EF4444; }
+    .vs-tag-mixed { background: rgba(245,158,11,0.12); color: #F59E0B; }
+
+    /* Pick-blocks */
+    .vs-picks {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .vs-pick {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+      background: rgba(30,27,46,0.5);
+    }
+
+    .vs-pick h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-1);
+      margin-bottom: 10px;
+      font-family: var(--mono);
+      letter-spacing: 0.02em;
+    }
+
+    .vs-pick p {
+      font-size: 13px;
+      color: var(--text-2);
+      line-height: 1.7;
+      margin: 0;
+    }
+
+    @media (max-width: 720px) {
+      .vs-picks { grid-template-columns: 1fr; }
+      .vs-title { font-size: 24px; }
+      .vs-wrap { padding: 32px 20px 60px; }
+    }
+
+    /* CTA */
+    .vs-cta {
+      margin-top: 12px;
+      padding: 28px 24px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(167,139,250,0.06) 0%, rgba(167,139,250,0.02) 100%);
+      text-align: center;
+    }
+
+    .vs-cta p {
+      font-size: 14px;
+      color: var(--text-2);
+      margin-bottom: 16px;
+    }
+
+    .vs-cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 22px;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      color: #13111C;
+      background: var(--accent);
+      border-radius: 8px;
+      text-decoration: none;
+      transition: opacity 0.15s, transform 0.15s;
+    }
+    .vs-cta-btn:hover { opacity: 0.92; transform: translateY(-1px); }
+
+    .vs-sources {
+      margin-top: 36px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-s);
+      font-size: 11px;
+      color: var(--text-3);
+      font-family: var(--mono);
+      line-height: 1.7;
+    }
+    .vs-sources a { color: var(--text-3); text-decoration: underline; text-decoration-color: var(--border); }
+    .vs-sources a:hover { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+  <div class="bg-layer dot-grid" aria-hidden="true">
+    <div class="blob blob-tool-1"></div>
+    <div class="blob blob-tool-2"></div>
+  </div>
+
+  <header class="header-tool">
+    <div class="header-inner">
+      <a class="back-link" href="index.html">&larr; All tools</a>
+      <div class="header-sep"></div>
+      <a href="/index.html">
+        <img src="/assets/logo-horizontal.svg" alt="PrivBatch" height="32">
+      </a>
+      <span class="tool-crumb" aria-label="Comparison page">
+        <span class="sep">/</span>
+        <span class="name">vs jsonformatter.org</span>
+      </span>
+      <div class="h-spacer"></div>
+      <div class="privacy-badge badge-inline">
+        <div class="dot" aria-hidden="true"></div>
+        100% offline
+      </div>
+    </div>
+  </header>
+
+  <div class="vs-wrap">
+    <div class="vs-eyebrow">Honest comparison</div>
+    <h1 class="vs-title">PrivBatch vs jsonformatter.org</h1>
+    <p class="vs-tagline">Both tools format and validate JSON in your browser. The differences are smaller than the marketing would suggest. Here is the honest version.</p>
+
+    <div class="vs-section">
+      <h2>What jsonformatter.org does well</h2>
+      <p>jsonformatter.org has been the first Google result for "JSON formatter" for years and that is not an accident. It works on day one, has zero learning curve, and ships features PrivBatch does not: a public-share link for pasted JSON, a graph view for nested structures, and a built-in JSONLint mode. The browser-side processing is real - they were doing client-side JSON validation long before "privacy-first" became a positioning angle.</p>
+      <p>If you need to send a colleague a formatted blob over Slack and you want a one-click public URL, jsonformatter.org is faster than PrivBatch will ever be.</p>
+    </div>
+
+    <div class="vs-section">
+      <h2>What PrivBatch does differently</h2>
+      <p>PrivBatch's JSON Formatter has no ads, no public-share feature, no third-party scripts in the page, and works after the first load with the network completely disabled. The "Prove It" toggle counts every network request the page makes while you are formatting JSON - the expected number is 0.</p>
+      <p>You also get the same dark UI as the other 20 tools on the site, the same keyboard shortcuts, and a license-key path if you want to remove the free-tier batch limit later.</p>
+    </div>
+
+    <div class="vs-section">
+      <h2>Honest tradeoff table</h2>
+      <div class="vs-table-wrap">
+        <table class="vs-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>jsonformatter.org</th>
+              <th>PrivBatch</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="vs-row-comp">
+              <td>Brand recognition / SEO</td>
+              <td>Top Google result, 10+ years of trust</td>
+              <td>Launched 2026</td>
+            </tr>
+            <tr class="vs-row-comp">
+              <td>Public share link</td>
+              <td>Yes, save and share a JSON URL</td>
+              <td>No (by design)</td>
+            </tr>
+            <tr class="vs-row-comp">
+              <td>Graph / tree visualisation</td>
+              <td>Tree view + graph view</td>
+              <td>Tree view only</td>
+            </tr>
+            <tr class="vs-row-mixed">
+              <td>Processing location</td>
+              <td>In-browser</td>
+              <td>In-browser</td>
+            </tr>
+            <tr class="vs-row-mixed">
+              <td>Free to use</td>
+              <td>Yes</td>
+              <td>Yes (Free tier covers all 21 tools)</td>
+            </tr>
+            <tr class="vs-row-pb">
+              <td>Ads on the page</td>
+              <td>Yes (asks to disable ad blocker)</td>
+              <td>0</td>
+            </tr>
+            <tr class="vs-row-pb">
+              <td>Works fully offline</td>
+              <td>No (loads ads + analytics)</td>
+              <td>Yes after first load</td>
+            </tr>
+            <tr class="vs-row-pb">
+              <td>Third-party trackers</td>
+              <td>Present</td>
+              <td>0</td>
+            </tr>
+            <tr class="vs-row-pb">
+              <td>Prove-It network counter</td>
+              <td>No</td>
+              <td>Built-in toggle</td>
+            </tr>
+            <tr class="vs-row-pb">
+              <td>Other tools in the same UI</td>
+              <td>JSON-only family</td>
+              <td>21 dev tools, one keyboard shortcut to switch</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:14px; font-size:12px; color:var(--text-3);">
+        <span class="vs-tag vs-tag-pb">PrivBatch</span>
+        <span class="vs-tag vs-tag-mixed">Tie</span>
+        <span class="vs-tag vs-tag-comp">Competitor</span>
+      </p>
+    </div>
+
+    <div class="vs-section">
+      <h2>Pick the one that fits the job</h2>
+      <div class="vs-picks">
+        <div class="vs-pick">
+          <h3>Pick jsonformatter.org if</h3>
+          <p>You need a shareable public URL, you want the graph view, or you are formatting non-sensitive JSON and the ad-supported workflow does not bother you. It is a fine tool and the team behind it has been at this longer than we have.</p>
+        </div>
+        <div class="vs-pick">
+          <h3>Pick PrivBatch if</h3>
+          <p>The JSON contains anything you would not paste into a stranger's website - API keys, customer payloads, internal IDs, staging data. Or you want a single offline tool family that covers JSON, CSV, JWT, base64, and 17 others with the same shortcuts.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="vs-cta">
+      <p>Try the privacy-first version. 0 uploads, 0 ads, 0 trackers.</p>
+      <a class="vs-cta-btn" href="/tools/json-formatter.html">Open JSON Formatter &rarr;</a>
+    </div>
+
+    <div class="vs-sources">
+      Research sources: <a href="https://jsonformatter.org/">jsonformatter.org</a> (May 2026). Claims verified against the site's own FAQ and footer.
+    </div>
+  </div>
+
+  <footer class="footer-tool">
+    <div class="footer-inner">
+      <span>&copy; 2026 PrivBatch</span>
+      <a href="privacy.html">Privacy</a>
+      <a href="changelog.html">Changelog</a>
+      <a href="licence.html">Licence</a>
+      <span class="footer-note">All processing is local - zero uploads, zero logs</span>
+    </div>
+  </footer>
+
+  <script src="js/oss-page-chrome.js"></script>
+</body>
+</html>

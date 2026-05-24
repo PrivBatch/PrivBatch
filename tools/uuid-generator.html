@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/assets/icon-192.png">
+  <title>UUID Generator - Free, Private, Offline | PrivBatch</title>
+  <meta name="description" content="Generate UUID v4 in bulk. Runs 100% in your browser - no uploads, no accounts, instant results.">
+  <link rel="canonical" href="https://privbatch.com/tools/uuid-generator.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/light-mode.css">
+  <script src="../js/config.js"></script>
+  <script src="../js/gold-standard.js"></script>
+  <style>
+    body { display: flex; flex-direction: column; min-height: 100vh; box-sizing: border-box; }
+
+    .tool-header { position: relative; z-index: 1; background: var(--bg); border-bottom: 1px solid var(--border-s); flex-shrink: 0; }
+    .tool-header-inner { max-width: 1400px; margin: 0 auto; padding: 10px 24px; display: flex; align-items: center; gap: 16px; }
+    .tool-title { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; color: var(--text-1); }
+    .tool-header-spacer { flex: 1; }
+    .tool-badge-free { font-family: var(--mono); font-size: 9px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--free); display: flex; align-items: center; gap: 5px; }
+    .tool-badge-free::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--free); }
+
+    .settings-bar { position: relative; z-index: 96; background: rgba(22,19,34,0.98); border-bottom: 1px solid var(--border); padding: 0 24px; height: 44px; display: flex; align-items: center; gap: 16px; overflow: visible; flex-shrink: 0; }
+    .sbar-group { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+    .sbar-label { font-family: var(--mono); font-size: 10px; color: var(--text-3); white-space: nowrap; }
+    .sbar-sep { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
+    .sbar-toggle { display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+    .sbar-mode-btn { font-family: var(--mono); font-size: 10px; font-weight: 600; padding: 4px 10px; cursor: pointer; border: none; background: transparent; color: var(--text-3); transition: background 0.15s, color 0.15s; white-space: nowrap; }
+    .sbar-mode-btn.active { background: rgba(167,139,250,0.15); color: var(--accent); }
+    .sbar-mode-sep { width: 1px; background: var(--border); }
+
+    .sbar-number { font-family: var(--mono); font-size: 11px; width: 56px; background: rgba(167,139,250,0.06); border: 1px solid var(--border); border-radius: 5px; color: var(--text-1); padding: 3px 7px; outline: none; text-align: center; }
+    .sbar-number:focus { border-color: var(--accent); }
+
+    .tool-layout { display: grid; grid-template-columns: var(--left-w, 420px) 8px 1fr; max-width: 1400px; width: 100%; margin: 0 auto; padding: 12px 24px; box-sizing: border-box; gap: 0; align-items: stretch; position: relative; z-index: 1; }
+    .panel-resizer { display: flex; align-items: flex-start; justify-content: center; padding-top: 20px; cursor: col-resize; user-select: none; z-index: 10; }
+    .panel-resizer::after { content: ''; width: 2px; height: 32px; background: var(--border); border-radius: 1px; transition: background 0.15s; }
+    .panel-resizer:hover::after { background: rgba(167,139,250,0.4); }
+    .left-panel { display: flex; flex-direction: column; overflow: hidden; }
+    .right-col { display: flex; flex-direction: column; }
+    .output-panel { display: flex; flex-direction: column; overflow: hidden; }
+
+    .output-body { height: 300px; overflow-y: auto; display: flex; flex-direction: column; }
+    .output-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: var(--text-3); font-family: var(--mono); font-size: 11px; }
+    .output-empty-icon { font-size: 32px; opacity: 0.25; }
+    .output-footer { padding: 8px 16px; border-top: 1px solid var(--border-s); display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+    .output-stat { font-family: var(--mono); font-size: 10px; color: var(--text-3); }
+
+    .stats-bar { font-family: var(--mono); font-size: 10px; color: var(--free); padding: 5px 16px; display: none; flex-shrink: 0; animation: stats-in 0.25s ease-out; border-top: 1px solid rgba(45,212,191,0.15); background: rgba(45,212,191,0.04); }
+    .stats-bar.visible { display: block; }
+    @keyframes stats-in { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
+
+    button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    @media (max-width: 1000px) { .tool-layout { grid-template-columns: 1fr !important; padding: 8px 16px; } .panel-resizer { display: none; } .right-col { margin-top: 8px; } }
+
+    /* UUID-specific */
+    .uuid-left-inner { padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+    .uuid-count-row { display: flex; align-items: center; gap: 12px; }
+    .uuid-count-row label { font-family: var(--mono); font-size: 11px; color: var(--text-3); }
+    .uuid-count-input { width: 80px; font-family: var(--mono); font-size: 14px; font-weight: 600; text-align: center; background: rgba(167,139,250,0.06); border: 1px solid var(--border); border-radius: 8px; color: var(--text-1); padding: 8px 12px; outline: none; }
+    .uuid-count-input:focus { border-color: var(--accent); }
+    .uuid-info { font-family: var(--mono); font-size: 10px; color: var(--text-3); line-height: 1.6; }
+    .uuid-generate-btn { width: 100%; padding: 12px; font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; background: var(--accent); color: #0e0b1a; border: none; border-radius: 8px; cursor: pointer; transition: opacity 0.15s; }
+    .uuid-generate-btn:hover { opacity: 0.85; }
+
+    .uuid-row { display: flex; align-items: center; gap: 8px; padding: 6px 16px; border-bottom: 1px solid rgba(167,139,250,0.06); font-family: var(--mono); font-size: 12px; color: var(--text-2); }
+    .uuid-row:last-child { border-bottom: none; }
+    .uuid-num { color: var(--text-3); font-size: 10px; min-width: 24px; text-align: right; flex-shrink: 0; }
+    .uuid-val { flex: 1; letter-spacing: 0.02em; }
+    .uuid-copy-btn { font-family: var(--mono); font-size: 9px; font-weight: 600; padding: 2px 7px; border: 1px solid var(--border); border-radius: 4px; background: transparent; color: var(--text-3); cursor: pointer; transition: all 0.12s; flex-shrink: 0; }
+    .uuid-copy-btn:hover { color: var(--text-1); border-color: rgba(167,139,250,0.4); }
+    .format-chip { font-family: var(--mono); font-size: 9px; padding: 2px 6px; border-radius: 4px; background: rgba(167,139,250,0.08); color: var(--accent); border: 1px solid rgba(167,139,250,0.2); }
+  </style>
+</head>
+<body>
+
+  <div class="bg-layer dot-grid" aria-hidden="true">
+    <div class="blob blob-tool-1"></div>
+    <div class="blob blob-tool-2"></div>
+    <div class="blob blob-tool-3"></div>
+  </div>
+
+  <header class="header-tool">
+    <div class="header-inner">
+      <a class="back-link" href="../index.html">&larr; All tools</a>
+      <div class="header-sep"></div>
+      <a href="../index.html"><img src="/assets/logo-horizontal.svg" alt="PrivBatch" height="32"></a>
+      <span class="tool-crumb" aria-label="Current tool: UUID Generator">
+        <span class="sep">/</span><span class="name">UUID Generator</span>
+      </span>
+      <div class="h-spacer"></div>
+      <div class="privacy-badge badge-inline"><div class="dot" aria-hidden="true"></div>100% offline</div>
+      <input class="license-input" id="license-input" type="text" placeholder="&#128273; license key" aria-label="License key">
+      <span class="license-unlocked" aria-live="polite"></span>
+    </div>
+  </header>
+
+  <div class="tool-header">
+    <div class="tool-header-inner">
+      <span class="tool-title">UUID Generator</span>
+      <div class="tool-header-spacer"></div>
+      <span class="tool-badge-free">Free tool · No limits</span>
+    </div>
+  </div>
+
+  <div class="settings-bar">
+    <div class="sbar-group">
+      <span class="sbar-label">Count:</span>
+      <input class="sbar-number" id="count-input" type="number" min="1" max="100" value="10" aria-label="Number of UUIDs">
+    </div>
+    <div class="sbar-sep"></div>
+    <div class="sbar-group">
+      <span class="sbar-label">Format:</span>
+      <div class="sbar-toggle">
+        <button class="sbar-mode-btn active" id="fmt-standard">Standard</button>
+        <div class="sbar-mode-sep"></div>
+        <button class="sbar-mode-btn" id="fmt-upper">UPPER</button>
+        <div class="sbar-mode-sep"></div>
+        <button class="sbar-mode-btn" id="fmt-braces">{braces}</button>
+      </div>
+    </div>
+    <!-- GS buttons (Recent, Prove It, Shortcuts) injected by gold-standard.js -->
+  </div>
+
+  <div class="tool-layout" id="tool-layout">
+
+    <div class="glass-panel left-panel">
+      <div class="uuid-left-inner">
+        <div class="uuid-count-row">
+          <label for="count-big">Generate</label>
+          <input class="uuid-count-input" id="count-big" type="number" min="1" max="100" value="10" aria-label="Number of UUIDs">
+          <label for="count-big">UUID v4s</label>
+        </div>
+        <div class="uuid-info">
+          UUID v4 uses cryptographically secure random numbers via<br>
+          <code style="color:var(--accent)">crypto.randomUUID()</code> - no external libraries needed.<br><br>
+          Each UUID is unique with astronomically low collision probability.<br>
+          All generation happens locally in your browser.
+        </div>
+        <button class="uuid-generate-btn" id="generate-btn">Generate UUIDs</button>
+      </div>
+    </div>
+
+    <div class="panel-resizer" id="panel-resizer" aria-hidden="true"></div>
+
+    <div class="right-col">
+      <div class="glass-panel output-panel" id="output-panel">
+        <div class="panel-header">
+          <span class="panel-title panel-title-accent">Output</span>
+          <div class="panel-spacer"></div>
+          <button class="panel-action" id="copy-btn" aria-label="Copy all UUIDs to clipboard">Copy All</button>
+          <button class="panel-action" id="download-btn" aria-label="Download UUIDs">Download</button>
+          <button class="panel-action" id="expand-btn" aria-label="Expand output panel">Expand &#8597;</button>
+        </div>
+
+        <div class="output-body" id="output-body">
+          <div class="output-empty" id="output-empty">
+            <div class="output-empty-icon" aria-hidden="true">&#8853;</div>
+            Click Generate or press Ctrl+Enter
+          </div>
+          <div id="output-area"></div>
+        </div>
+
+        <div class="output-footer">
+          <span class="output-stat" id="out-stat">Ready</span>
+        </div>
+      </div>
+
+      <div class="stats-bar" id="stats-bar" aria-live="polite"></div>
+    </div>
+
+  </div>
+
+  <footer class="footer-tool">
+    <div class="footer-inner">
+      <span>© 2026 PrivBatch</span>
+      <a href="../privacy.html">Privacy</a>
+      <a href="../changelog.html">Changelog</a>
+      <a href="../licence.html">Licence</a>
+      <span class="footer-note">All processing is local - zero uploads, zero logs</span>
+    </div>
+  </footer>
+
+  <!-- GS overlays (Prove It, Shortcuts, Switcher) injected by gold-standard.js -->
+
+  <script src="../js/license.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    const $ = id => document.getElementById(id);
+
+    const DOM = {
+      statsBar: $('stats-bar'), copyBtn: $('copy-btn'), downloadBtn: $('download-btn'),
+      expandBtn: $('expand-btn'), outputBody: $('output-body'), outputEmpty: $('output-empty'),
+      outputArea: $('output-area'), outStat: $('out-stat'),
+      countInput: $('count-input'), countBig: $('count-big'),
+      generateBtn: $('generate-btn'),
+    };
+
+    const state = { lastOutput: '', expanded: false, fmt: 'standard' };
+
+    function fmtSize(bytes) { if (bytes < 1024) return bytes + ' B'; if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB'; return (bytes / 1048576).toFixed(1) + ' MB'; }
+    function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+    function showStatsBar(ms, outBytes) {
+      DOM.statsBar.textContent = `Generated in ${ms}ms · ${fmtSize(outBytes)} · 0 bytes sent to any server`;
+      DOM.statsBar.className = 'stats-bar visible';
+    }
+
+    function formatUUID(uuid) {
+      if (state.fmt === 'upper') return uuid.toUpperCase();
+      if (state.fmt === 'braces') return '{' + uuid + '}';
+      return uuid;
+    }
+
+    function generate() {
+      const t0 = performance.now();
+      let count = Math.min(100, Math.max(1, parseInt(DOM.countBig.value || DOM.countInput.value, 10) || 10));
+      DOM.countBig.value = count;
+      DOM.countInput.value = count;
+
+      const uuids = [];
+      for (let i = 0; i < count; i++) uuids.push(crypto.randomUUID());
+      const formatted = uuids.map(u => formatUUID(u));
+
+      state.lastOutput = formatted.join('\n');
+      DOM.outputEmpty.style.display = 'none';
+      DOM.outputArea.innerHTML = formatted.map((u, i) =>
+        `<div class="uuid-row">
+          <span class="uuid-num">${i + 1}</span>
+          <span class="uuid-val">${esc(u)}</span>
+          <button class="uuid-copy-btn" data-uuid="${esc(u)}" aria-label="Copy UUID">Copy</button>
+        </div>`
+      ).join('');
+
+      DOM.outputArea.querySelectorAll('.uuid-copy-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          await navigator.clipboard.writeText(btn.dataset.uuid);
+          btn.textContent = 'Copied!';
+          btn.style.color = '#2DD4BF';
+          btn.style.borderColor = 'rgba(45,212,191,0.4)';
+          setTimeout(() => { btn.textContent = 'Copy'; btn.style.color = ''; btn.style.borderColor = ''; }, 2000);
+        });
+      });
+
+      DOM.outStat.textContent = `${count} UUIDs generated`;
+      GoldStandard.History.save({ tool: 'UUID Generator', timestamp: Date.now(), inputSize: count, count, fmt: state.fmt });
+      showStatsBar(Math.round(performance.now() - t0), new Blob([state.lastOutput]).size);
+    }
+
+    function downloadOutput() {
+      if (!state.lastOutput) return;
+      const blob = new Blob([state.lastOutput], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'uuids.txt'; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    DOM.generateBtn.addEventListener('click', generate);
+    DOM.countBig.addEventListener('input', () => { DOM.countInput.value = DOM.countBig.value; });
+    DOM.countInput.addEventListener('input', () => { DOM.countBig.value = DOM.countInput.value; });
+
+    /* Format toggle */
+    ['fmt-standard', 'fmt-upper', 'fmt-braces'].forEach(id => {
+      $(id).addEventListener('click', () => {
+        document.querySelectorAll('.sbar-mode-btn').forEach(b => b.classList.remove('active'));
+        $(id).classList.add('active');
+        state.fmt = id === 'fmt-standard' ? 'standard' : id === 'fmt-upper' ? 'upper' : 'braces';
+      });
+    });
+
+    DOM.copyBtn.addEventListener('click', async () => {
+      if (!state.lastOutput) return;
+      try {
+        await navigator.clipboard.writeText(state.lastOutput);
+        DOM.copyBtn.textContent = 'Copied!';
+        DOM.copyBtn.style.color = '#2DD4BF';
+        DOM.copyBtn.style.borderColor = 'rgba(45,212,191,0.4)';
+        setTimeout(() => { DOM.copyBtn.textContent = 'Copy All'; DOM.copyBtn.style.color = ''; DOM.copyBtn.style.borderColor = ''; }, 2000);
+      } catch (_) {}
+    });
+
+    DOM.downloadBtn.addEventListener('click', downloadOutput);
+
+    DOM.expandBtn.addEventListener('click', () => {
+      state.expanded = !state.expanded;
+      DOM.outputBody.style.height = state.expanded ? '650px' : '300px';
+      DOM.expandBtn.textContent = state.expanded ? 'Collapse ↕' : 'Expand ↕';
+    });
+
+    (function () {
+      const resizer = $('panel-resizer'), layout = $('tool-layout');
+      let startX, startW, dragging = false;
+      resizer.addEventListener('mousedown', e => { startX = e.clientX; startW = parseInt(getComputedStyle(layout).getPropertyValue('--left-w') || '420', 10); dragging = true; document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; });
+      document.addEventListener('mousemove', e => { if (!dragging) return; layout.style.setProperty('--left-w', Math.min(700, Math.max(260, startW + e.clientX - startX)) + 'px'); });
+      document.addEventListener('mouseup', () => { if (!dragging) return; dragging = false; document.body.style.cursor = ''; document.body.style.userSelect = ''; });
+    })();
+
+    GoldStandard.init({
+      toolName : 'UUID Generator',
+      tier     : 'free',
+      onConvert : generate,
+      onDownload: downloadOutput,
+      shortcuts: [
+        { keys: ['Ctrl', 'Enter'], desc: 'Convert / process' },
+        { keys: ['Ctrl', 'S'],     desc: 'Download output' },
+        { keys: ['Ctrl', 'K'],     desc: 'Open tool switcher' },
+        { keys: ['Escape'],        desc: 'Close overlay / clear' },
+        { keys: ['?'],             desc: 'Toggle shortcuts' },
+      ],
+    });
+
+  })();
+  </script>
+  <script src="../js/oss-page-chrome.js"></script>
+</body>
+</html>

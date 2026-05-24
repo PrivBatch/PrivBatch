@@ -1,0 +1,132 @@
+/* ── Reset ── */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ── Design tokens ── */
+:root {
+  /* Surfaces */
+  --bg:       #13111C;
+  --bg-deep:  #080614;
+  --s1:       #1C1829;
+  --s2:       #231E35;
+  --glass:    rgba(26,23,40,0.72);
+  --glass-h:  rgba(30,27,46,0.85);
+  --panel:    rgba(22,19,34,0.9);
+
+  /* Accents */
+  --accent:   #A78BFA;
+  --accent-d: #7C3AED;
+
+  /* Semantic */
+  --free:     #34D399;
+  --teal:     #2DD4BF;
+  --warn:     #FBBF24;
+  --danger:   #F87171;
+
+  /* Text */
+  --text-1:   #EDE9FF;
+  --text-2:   #9590AD;
+  --text-3:   #4D4866;
+
+  /* Borders */
+  --border:   rgba(167,139,250,0.14);
+  --border-h: rgba(167,139,250,0.38);
+  --border-s: rgba(167,139,250,0.08);
+
+  /* Typography */
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* CLAUDE.md canonical aliases */
+  --color-bg:           var(--bg);
+  --color-bg-card:      var(--s1);
+  --color-accent:       var(--accent);
+  --color-accent-green: var(--teal);
+  --color-text:         var(--text-1);
+  --color-text-muted:   var(--text-3);
+  --color-border:       var(--border);
+}
+
+/* ── Base typography ── */
+body {
+  background: var(--bg);
+  color: var(--text-1);
+  font-family: var(--sans);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Homepage uses the deeper background with nebula gradients */
+body.page-home {
+  background:
+    radial-gradient(ellipse 100% 65% at 8%  -8%,  rgba(109,40,217,0.52)  0%, transparent 62%),
+    radial-gradient(ellipse 60%  50% at 88% 100%, rgba(76,29,149,0.38)   0%, transparent 65%),
+    radial-gradient(ellipse 45%  40% at 55% 45%,  rgba(124,58,237,0.14)  0%, transparent 58%),
+    #080614;
+}
+
+a { color: inherit; text-decoration: none; }
+
+/* ── Shared animations ── */
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(52,211,153,0.5); }
+  50%       { box-shadow: 0 0 0 5px rgba(52,211,153,0); }
+}
+
+@keyframes pulse-opacity {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes blob-1 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(30px,50px); } }
+@keyframes blob-2 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-40px,30px); } }
+@keyframes blob-3 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(20px,-40px); } }
+@keyframes blob-d1 { to { transform: translate(55px, 50px);  } }
+@keyframes blob-d2 { to { transform: translate(-48px,-42px); } }
+@keyframes blob-d3 { to { transform: translate(32px, -52px); } }
+@keyframes blob-d4 { to { transform: translate(-22px, 38px); } }
+
+/* ── Static starfield - mobile only (canvas skipped, class added by starfield.js) ── */
+body.static-starfield .bg-layer {
+  background-image:
+    /* Bright stars - radius ~0.9 to 1.2px */
+    radial-gradient(circle at  47px  28px, rgba(255,255,255,0.72) 1.1px, transparent 1.1px),
+    radial-gradient(circle at 182px  95px, rgba(224,215,255,0.65) 1.0px, transparent 1.0px),
+    radial-gradient(circle at 310px 148px, rgba(255,255,255,0.68) 1.2px, transparent 1.2px),
+    radial-gradient(circle at  89px 201px, rgba(210,200,255,0.60) 0.9px, transparent 0.9px),
+    radial-gradient(circle at 250px 230px, rgba(255,255,255,0.70) 1.0px, transparent 1.0px),
+    radial-gradient(circle at 340px  55px, rgba(255,255,255,0.65) 0.9px, transparent 0.9px),
+    /* Medium stars - radius ~0.5 to 0.7px */
+    radial-gradient(circle at 130px  45px, rgba(255,255,255,0.42) 0.6px, transparent 0.6px),
+    radial-gradient(circle at  22px 130px, rgba(255,255,255,0.38) 0.5px, transparent 0.5px),
+    radial-gradient(circle at 275px  75px, rgba(224,215,255,0.40) 0.6px, transparent 0.6px),
+    radial-gradient(circle at 160px 175px, rgba(255,255,255,0.35) 0.5px, transparent 0.5px),
+    radial-gradient(circle at  55px 240px, rgba(255,255,255,0.40) 0.6px, transparent 0.6px),
+    radial-gradient(circle at 370px 195px, rgba(210,200,255,0.38) 0.5px, transparent 0.5px),
+    radial-gradient(circle at 210px  15px, rgba(255,255,255,0.42) 0.6px, transparent 0.6px),
+    /* Dim stars - radius ~0.3 to 0.4px */
+    radial-gradient(circle at  78px  68px, rgba(255,255,255,0.28) 0.4px, transparent 0.4px),
+    radial-gradient(circle at 320px  20px, rgba(255,255,255,0.25) 0.3px, transparent 0.3px),
+    radial-gradient(circle at 200px 120px, rgba(255,255,255,0.22) 0.4px, transparent 0.4px),
+    radial-gradient(circle at 110px 155px, rgba(255,255,255,0.26) 0.3px, transparent 0.3px),
+    radial-gradient(circle at 355px 130px, rgba(255,255,255,0.24) 0.4px, transparent 0.4px),
+    radial-gradient(circle at  15px 210px, rgba(255,255,255,0.28) 0.3px, transparent 0.3px),
+    radial-gradient(circle at 235px 185px, rgba(255,255,255,0.20) 0.4px, transparent 0.4px);
+  background-size: 390px 265px;
+  background-repeat: repeat;
+}

@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/assets/icon-192.png">
+  <title>File Detective - Free, Private, Offline | PrivBatch</title>
+  <meta name="description" content="Drop a broken file. Get a precise diagnosis. Fixed in seconds. Privately. Auto-detects and repairs JSON, CSV, and XML - runs 100% in your browser.">
+  <link rel="canonical" href="https://privbatch.com/tools/file-fixer.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/light-mode.css">
+  <script src="../js/config.js"></script>
+  <script src="../js/gold-standard.js"></script>
+  <style>
+    body { display: flex; flex-direction: column; min-height: 100vh; box-sizing: border-box; }
+    .tool-header { position: relative; z-index: 1; background: var(--bg); border-bottom: 1px solid var(--border-s); flex-shrink: 0; }
+    .tool-header-inner { max-width: 1400px; margin: 0 auto; padding: 10px 24px; display: flex; align-items: center; gap: 16px; }
+    .tool-title { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; color: var(--text-1); }
+    .tool-header-spacer { flex: 1; }
+    .tool-badge-free { font-family: var(--mono); font-size: 9px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--free); display: flex; align-items: center; gap: 5px; }
+    .tool-badge-free::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--free); }
+    .settings-bar { position: relative; z-index: 96; background: rgba(22,19,34,0.98); border-bottom: 1px solid var(--border); padding: 0 24px; height: 44px; display: flex; align-items: center; gap: 16px; overflow: visible; flex-shrink: 0; }
+    .sbar-group  { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+    .sbar-label  { font-family: var(--mono); font-size: 10px; color: var(--text-3); white-space: nowrap; }
+    .sbar-sep    { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
+    .sbar-toggle { display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+    .sbar-mode-btn { font-family: var(--mono); font-size: 10px; font-weight: 600; padding: 4px 10px; cursor: pointer; border: none; background: transparent; color: var(--text-3); transition: background 0.15s, color 0.15s; white-space: nowrap; }
+    .sbar-mode-btn.active { background: rgba(167,139,250,0.15); color: var(--accent); }
+    .sbar-mode-sep { width: 1px; background: var(--border); }
+    .sbar-select { font-family: var(--mono); font-size: 10px; background: rgba(167,139,250,0.06); border: 1px solid var(--border); border-radius: 5px; color: var(--text-1); padding: 3px 7px; outline: none; cursor: pointer; transition: border-color 0.15s; }
+    .sbar-select:focus { border-color: var(--accent); }
+    .sbar-btn { font-family: var(--mono); font-size: 10px; font-weight: 600; padding: 4px 10px; cursor: pointer; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-3); transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
+    .sbar-btn:hover { color: var(--text-1); border-color: rgba(167,139,250,0.4); }
+    .sbar-btn.active { background: rgba(167,139,250,0.15); color: var(--accent); border-color: rgba(167,139,250,0.4); }
+    .sbar-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .sbar-btn-accent { background: rgba(167,139,250,0.18); color: var(--accent); border-color: rgba(167,139,250,0.4); }
+    .sbar-btn-accent:hover { background: rgba(167,139,250,0.28); }
+    .usage-badge { font-family: var(--mono); font-size: 10px; color: var(--text-3); white-space: nowrap; }
+    .usage-badge .used { color: var(--text-2); font-weight: 600; }
+    .usage-badge .limit-hit { color: #EF4444; }
+
+    .tool-layout { display: grid; grid-template-columns: var(--left-w, 480px) 8px 1fr; max-width: 1400px; width: 100%; margin: 0 auto; padding: 12px 24px; box-sizing: border-box; gap: 0; align-items: stretch; position: relative; z-index: 1; }
+    .panel-resizer { display: flex; align-items: flex-start; justify-content: center; padding-top: 20px; cursor: col-resize; user-select: none; z-index: 10; }
+    .panel-resizer::after { content: ''; width: 2px; height: 32px; background: var(--border); border-radius: 1px; transition: background 0.15s; }
+    .panel-resizer:hover::after { background: rgba(167,139,250,0.4); }
+    .left-panel { display: flex; flex-direction: column; overflow: hidden; }
+    .right-col  { display: flex; flex-direction: column; }
+
+    /* Input area */
+    .input-header { padding: 10px 14px 0; display: flex; align-items: center; gap: 10px; }
+    .input-label { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--text-2); }
+    .fmt-badge { font-family: var(--mono); font-size: 9px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; background: rgba(167,139,250,0.12); color: var(--accent); border: 1px solid rgba(167,139,250,0.25); }
+    .fmt-badge.json { background: rgba(45,212,191,0.1); color: #2DD4BF; border-color: rgba(45,212,191,0.3); }
+    .fmt-badge.csv  { background: rgba(245,158,11,0.1); color: #F59E0B; border-color: rgba(245,158,11,0.3); }
+    .fmt-badge.xml  { background: rgba(239,68,68,0.1); color: #EF4444; border-color: rgba(239,68,68,0.3); }
+
+    .input-textarea { flex: 1; width: 100%; box-sizing: border-box; resize: none; font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--text-1); background: transparent; border: none; outline: none; padding: 10px 14px; min-height: 340px; }
+    .input-footer { padding: 8px 14px; border-top: 1px solid var(--border-s); display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+    .input-stat { font-family: var(--mono); font-size: 10px; color: var(--text-3); }
+
+    /* Output tabs */
+    .out-tabs { display: flex; border-bottom: 1px solid var(--border-s); padding: 0 14px; }
+    .out-tab { font-family: var(--mono); font-size: 10px; font-weight: 600; padding: 9px 12px; cursor: pointer; border: none; background: transparent; color: var(--text-3); border-bottom: 2px solid transparent; transition: color 0.15s; }
+    .out-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .out-pane { display: none; }
+    .out-pane.active { display: flex; flex-direction: column; }
+
+    /* Fixed output */
+    .fixed-textarea { flex: 1; width: 100%; box-sizing: border-box; resize: none; font-family: var(--mono); font-size: 12px; line-height: 1.6; color: var(--text-1); background: transparent; border: none; outline: none; padding: 10px 14px; min-height: 300px; }
+
+    /* Diff view */
+    .diff-body { font-family: var(--mono); font-size: 11px; line-height: 1.65; overflow-y: auto; max-height: 400px; padding: 6px 0; }
+    .diff-line { display: flex; gap: 0; }
+    .diff-ln { width: 38px; flex-shrink: 0; text-align: right; padding: 0 8px; color: var(--text-3); opacity: 0.5; font-size: 10px; line-height: 1.65; user-select: none; }
+    .diff-sign { width: 16px; flex-shrink: 0; text-align: center; line-height: 1.65; }
+    .diff-text { flex: 1; padding: 0 6px; white-space: pre-wrap; word-break: break-all; line-height: 1.65; }
+    .diff-line.added  { background: rgba(45,212,191,0.08); }
+    .diff-line.added .diff-sign  { color: #2DD4BF; }
+    .diff-line.added .diff-text  { color: #2DD4BF; }
+    .diff-line.removed { background: rgba(239,68,68,0.08); }
+    .diff-line.removed .diff-sign { color: #EF4444; }
+    .diff-line.removed .diff-text { color: #EF4444; text-decoration: line-through; opacity: 0.8; }
+    .diff-line.ctx .diff-text { color: var(--text-3); }
+    .diff-sep { padding: 3px 8px; font-family: var(--mono); font-size: 10px; color: var(--text-3); background: rgba(167,139,250,0.05); border-top: 1px solid var(--border-s); border-bottom: 1px solid var(--border-s); }
+
+    /* Changes list */
+    .changes-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 400px; }
+    .change-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 10px; border-radius: 6px; background: rgba(45,212,191,0.06); border: 1px solid rgba(45,212,191,0.15); }
+    .change-icon { color: #2DD4BF; font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+    .change-text { font-family: var(--mono); font-size: 11px; color: var(--text-2); line-height: 1.4; }
+    .no-changes { padding: 32px 14px; text-align: center; font-family: var(--mono); font-size: 11px; color: var(--text-3); }
+
+    /* Limit gate */
+    .limit-gate { display: none; padding: 14px; margin: 12px; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); border-radius: 8px; font-family: var(--mono); font-size: 11px; color: #EF4444; line-height: 1.5; }
+    .limit-gate a { color: var(--accent); text-decoration: underline; cursor: pointer; }
+
+    /* Output panel */
+    .output-panel { display: flex; flex-direction: column; overflow: hidden; min-height: 400px; }
+    .panel-header { padding: 10px 14px; border-bottom: 1px solid var(--border-s); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .panel-title-accent { font-size: 12px; font-weight: 700; color: var(--accent); }
+    .panel-spacer { flex: 1; }
+    .panel-action { font-family: var(--mono); font-size: 10px; font-weight: 600; padding: 4px 10px; cursor: pointer; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-3); transition: all 0.15s; white-space: nowrap; }
+    .panel-action:hover { color: var(--text-1); border-color: rgba(167,139,250,0.4); }
+    .panel-action:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .output-footer { padding: 8px 14px; border-top: 1px solid var(--border-s); display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+    .output-stat { font-family: var(--mono); font-size: 10px; color: var(--text-3); }
+    .output-stat .val { color: var(--text-2); }
+    .stat-green { color: #2DD4BF !important; }
+    .stat-red   { color: #EF4444 !important; }
+
+    .output-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: var(--text-3); font-family: var(--mono); font-size: 11px; padding: 40px 0; }
+    .output-empty-icon { font-size: 32px; opacity: 0.25; }
+
+    /* Stats bar */
+    .stats-bar { font-family: var(--mono); font-size: 10px; color: var(--free); padding: 5px 16px; display: none; flex-shrink: 0; animation: stats-in 0.25s ease-out; border-top: 1px solid rgba(45,212,191,0.15); background: rgba(45,212,191,0.04); }
+    .stats-bar.visible { display: block; }
+    @keyframes stats-in { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
+
+  </style>
+</head>
+<body>
+
+<div class="bg-layer dot-grid" aria-hidden="true">
+  <div class="blob blob-tool-1"></div>
+  <div class="blob blob-tool-2"></div>
+  <div class="blob blob-tool-3"></div>
+</div>
+
+<header class="header-tool">
+  <div class="header-inner">
+    <a class="back-link" href="../index.html">&larr; All tools</a>
+    <div class="header-sep"></div>
+    <a href="../index.html"><img src="/assets/logo-horizontal.svg" alt="PrivBatch" height="32"></a>
+    <span class="tool-crumb" aria-label="Current tool: File Detective">
+      <span class="sep">/</span><span class="name">File Detective</span>
+    </span>
+    <div class="h-spacer"></div>
+    <div class="privacy-badge badge-inline"><div class="dot" aria-hidden="true"></div>100% offline</div>
+    <input class="license-input" id="license-input" type="text" placeholder="&#128273; license key" aria-label="License key">
+    <span class="license-unlocked" aria-live="polite"></span>
+  </div>
+</header>
+
+<div class="tool-header">
+  <div class="tool-header-inner">
+    <span class="tool-title">🔍 File Detective</span>
+    <div class="tool-header-spacer"></div>
+    <span class="tool-badge-free">Free · 3 Fixes/Day</span>
+  </div>
+</div>
+
+<div class="settings-bar">
+  <div class="sbar-group">
+    <span class="sbar-label">Format:</span>
+    <select class="sbar-select" id="fmt-select">
+      <option value="auto">Auto-detect</option>
+      <option value="json">JSON</option>
+      <option value="csv">CSV</option>
+      <option value="xml">XML</option>
+    </select>
+  </div>
+  <div class="sbar-sep"></div>
+  <div class="sbar-group">
+    <button class="sbar-btn sbar-btn-accent" id="btn-fix">🔧 Fix File</button>
+  </div>
+  <div class="sbar-sep"></div>
+  <div class="sbar-group">
+    <span class="usage-badge" id="usage-badge">0/3 fixes today</span>
+  </div>
+  <!-- GS buttons (Recent, Prove It, Shortcuts) injected by gold-standard.js -->
+</div>
+
+<div class="tool-layout" id="tool-layout">
+
+  <!-- LEFT: Input -->
+  <div class="glass-panel left-panel">
+    <div class="input-header">
+      <span class="input-label">Broken Input</span>
+      <span class="fmt-badge" id="fmt-badge">?</span>
+    </div>
+    <textarea class="input-textarea" id="input-ta" placeholder="Paste broken JSON, CSV, or XML here…" spellcheck="false"></textarea>
+    <div class="limit-gate" id="limit-gate">
+      Free tier: 3 fixes/day used. <a id="upgrade-link" href="../index.html#pricing">Upgrade to Pro</a> for unlimited.
+    </div>
+    <div class="input-footer">
+      <span class="input-stat" id="in-stat">0 chars</span>
+      <button class="panel-action" id="btn-sample-json">Sample JSON</button>
+      <button class="panel-action" id="btn-sample-csv">Sample CSV</button>
+      <button class="panel-action" id="btn-sample-xml">Sample XML</button>
+      <button class="panel-action" id="btn-clear-in">Clear</button>
+    </div>
+  </div>
+
+  <div class="panel-resizer" id="panel-resizer" aria-hidden="true"></div>
+
+  <!-- RIGHT: Output -->
+  <div class="right-col">
+    <div class="glass-panel output-panel" id="output-panel">
+      <div class="panel-header">
+        <span class="panel-title-accent">Output</span>
+        <div class="panel-spacer"></div>
+        <button class="panel-action" id="copy-btn">Copy Fixed</button>
+        <button class="panel-action" id="download-btn">Download</button>
+      </div>
+
+      <div class="out-tabs">
+        <button class="out-tab active" data-tab="fixed">Fixed Output</button>
+        <button class="out-tab" data-tab="diff">Diff View</button>
+        <button class="out-tab" data-tab="changes">Changes</button>
+      </div>
+
+      <!-- Fixed Output pane -->
+      <div class="out-pane active" id="pane-fixed">
+        <div class="output-empty" id="output-empty">
+          <div class="output-empty-icon">🔧</div>
+          Paste broken content and click Fix File
+        </div>
+        <textarea class="fixed-textarea" id="fixed-ta" style="display:none" readonly spellcheck="false"></textarea>
+      </div>
+
+      <!-- Diff View pane -->
+      <div class="out-pane" id="pane-diff">
+        <div class="diff-body" id="diff-body">
+          <div class="no-changes">Run Fix File to see diff</div>
+        </div>
+      </div>
+
+      <!-- Changes pane -->
+      <div class="out-pane" id="pane-changes">
+        <div class="changes-body" id="changes-body">
+          <div class="no-changes">No fixes applied yet</div>
+        </div>
+      </div>
+
+      <div class="output-footer">
+        <span class="output-stat" id="fix-count-stat">-</span>
+        <span class="output-stat" id="out-size-stat">-</span>
+      </div>
+    </div>
+    <div class="stats-bar" id="stats-bar" aria-live="polite"></div>
+  </div>
+
+</div>
+
+<footer class="footer-tool">
+  <div class="footer-inner">
+    <span>© 2026 PrivBatch</span>
+    <a href="../privacy.html">Privacy</a>
+    <a href="../changelog.html">Changelog</a>
+    <a href="../licence.html">Licence</a>
+    <span class="footer-note">All processing is local - zero uploads, zero logs</span>
+  </div>
+</footer>
+
+<!-- GS overlays (Prove It, Shortcuts, Switcher) injected by gold-standard.js -->
+
+<script src="../js/license.js"></script>
+<script>
+(function () {
+  'use strict';
+  const $ = id => document.getElementById(id);
+
+  /* DOM refs */
+  const DOM = {
+    statsBar:    $('stats-bar'),
+    copyBtn:     $('copy-btn'),
+    downloadBtn: $('download-btn'),
+    outputBody:  $('output-panel'),
+    inputTa:     $('input-ta'),
+    fixedTa:     $('fixed-ta'),
+    outputEmpty: $('output-empty'),
+    inStat:      $('in-stat'),
+    fmtBadge:    $('fmt-badge'),
+    fmtSelect:   $('fmt-select'),
+    fixCountStat:$('fix-count-stat'),
+    outSizeStat: $('out-size-stat'),
+    limitGate:   $('limit-gate'),
+    usageBadge:  $('usage-badge'),
+    diffBody:    $('diff-body'),
+    changesBody: $('changes-body'),
+  };
+
+  const state = { lastOutput: '', lastFixes: [], lastFmt: '', expanded: false };
+
+  /* ── Daily usage limit ── */
+  const TODAY = new Date().toISOString().slice(0, 10);
+  function getUsage() {
+    if (localStorage.getItem('pb_fixer_day') !== TODAY) return 0;
+    return parseInt(localStorage.getItem('pb_fixer_count') || '0', 10);
+  }
+  function incUsage() {
+    localStorage.setItem('pb_fixer_day', TODAY);
+    localStorage.setItem('pb_fixer_count', String(getUsage() + 1));
+    updateUsageBadge();
+  }
+  function updateUsageBadge() {
+    const used = getUsage();
+    const isPro = typeof LicenseManager !== 'undefined' &&
+                  LicenseManager.getStatus &&
+                  LicenseManager.getStatus() !== 'free';
+    if (isPro) {
+      DOM.usageBadge.innerHTML = '<span class="used">∞ fixes (Pro)</span>';
+      DOM.limitGate.style.display = 'none';
+      return;
+    }
+    DOM.usageBadge.innerHTML = `<span class="used${used >= 3 ? ' limit-hit' : ''}">${used}/3 fixes today</span>`;
+    DOM.limitGate.style.display = used >= 3 ? 'block' : 'none';
+  }
+
+  /* ── Format detection ── */
+  function detectFmt(text) {
+    const t = text.trim();
+    if (!t) return '?';
+    if (t.startsWith('{') || t.startsWith('[')) return 'json';
+    if (t.startsWith('<')) return 'xml';
+    return 'csv';
+  }
+  function updateFmtBadge(fmt) {
+    DOM.fmtBadge.textContent = fmt.toUpperCase();
+    DOM.fmtBadge.className = 'fmt-badge ' + (fmt === '?' ? '' : fmt);
+  }
+
+  /* ── JSON Fixer ── */
+  function fixJson(text) {
+    const fixes = [];
+    let result = text;
+
+    /* Remove trailing commas before } or ] */
+    const r1 = result.replace(/,(\s*[}\]])/g, '$1');
+    if (r1 !== result) { fixes.push('Removed trailing commas before } or ]'); result = r1; }
+
+    /* Add quotes to unquoted object keys */
+    const r2 = result.replace(/([{,]\s*)([a-zA-Z_$][a-zA-Z0-9_$]*)(\s*:)/g, (m, pre, key, suf) => {
+      /* skip if already preceded by a quote */
+      return pre + '"' + key + '"' + suf;
+    });
+    if (r2 !== result) { fixes.push('Added double quotes to unquoted object keys'); result = r2; }
+
+    /* Replace single-quoted strings with double quotes (simple pass) */
+    const r3 = result.replace(/'([^'\\]*)'/g, (m, inner) => {
+      const escaped = inner.replace(/"/g, '\\"');
+      return '"' + escaped + '"';
+    });
+    if (r3 !== result) { fixes.push('Converted single-quoted strings to double quotes'); result = r3; }
+
+    /* Balance brackets and braces */
+    let opens = 0, openB = 0;
+    for (const ch of result) {
+      if (ch === '{') opens++;
+      else if (ch === '}') opens--;
+      else if (ch === '[') openB++;
+      else if (ch === ']') openB--;
+    }
+    if (opens > 0) { result += '}'.repeat(opens); fixes.push(`Added ${opens} missing closing brace(s) }`); }
+    if (openB > 0) { result += ']'.repeat(openB); fixes.push(`Added ${openB} missing closing bracket(s) ]`); }
+
+    /* Validate result */
+    try { JSON.parse(result); } catch (e) {
+      fixes.push('Warning: result may still have issues - ' + e.message);
+    }
+
+    return { fixed: result, fixes };
+  }
+
+  /* ── CSV Fixer ── */
+  function parseCsvLine(line) {
+    const cols = []; let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { inQ = !inQ; }
+      else if (ch === ',' && !inQ) { cols.push(cur); cur = ''; }
+      else { cur += ch; }
+    }
+    cols.push(cur);
+    return cols;
+  }
+
+  function fixCsv(text) {
+    const fixes = [];
+    const rawLines = text.split('\n');
+    const lines = rawLines.map(l => l.trimEnd());
+    if (!lines.length || !lines[0].trim()) return { fixed: text, fixes };
+
+    const headerCols = parseCsvLine(lines[0]).length;
+    let paddedCount = 0, trimmedCount = 0;
+
+    const fixed = lines.map((line, i) => {
+      if (!line.trim()) return line;
+      const cols = parseCsvLine(line);
+      if (i === 0) return line; /* header */
+      if (cols.length < headerCols) {
+        paddedCount++;
+        return line + ','.repeat(headerCols - cols.length);
+      }
+      if (cols.length > headerCols) {
+        trimmedCount++;
+        /* re-join first N columns */
+        return cols.slice(0, headerCols).join(',');
+      }
+      return line;
+    });
+
+    if (paddedCount) fixes.push(`Padded ${paddedCount} row(s) with missing columns`);
+    if (trimmedCount) fixes.push(`Trimmed ${trimmedCount} row(s) with extra columns`);
+
+    /* Normalise line endings */
+    const normalized = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    if (normalized !== text) fixes.push('Normalised line endings to LF');
+
+    return { fixed: fixed.join('\n'), fixes };
+  }
+
+  /* ── XML Fixer ── */
+  function fixXml(text) {
+    const fixes = [];
+    let result = text;
+
+    /* Escape bare & not already an entity */
+    const r1 = result.replace(/&(?!amp;|lt;|gt;|quot;|apos;|#\d+;|#x[0-9a-fA-F]+;)/g, '&amp;');
+    if (r1 !== result) { fixes.push('Escaped unescaped & characters'); result = r1; }
+
+    /* Find unclosed tags using a stack */
+    const tagPattern = /<\/?([a-zA-Z][a-zA-Z0-9_:-]*)([^>]*)>/g;
+    const stack = [];
+    let m;
+    while ((m = tagPattern.exec(result)) !== null) {
+      const full = m[0], name = m[1], attrs = m[2];
+      if (full.startsWith('</')) {
+        if (stack.length && stack[stack.length - 1] === name) stack.pop();
+      } else if (!attrs.endsWith('/') && !full.endsWith('/>')) {
+        stack.push(name);
+      }
+    }
+    if (stack.length) {
+      const closers = stack.reverse().map(n => `</${n}>`).join('');
+      result += closers;
+      fixes.push(`Closed ${stack.length} unclosed tag(s): ${stack.join(', ')}`);
+    }
+
+    /* Quote unquoted attribute values */
+    const r2 = result.replace(/(\s[a-zA-Z][a-zA-Z0-9_-]*)=([^\s"'>][^\s>]*)/g, '$1="$2"');
+    if (r2 !== result) { fixes.push('Added quotes to unquoted attribute values'); result = r2; }
+
+    return { fixed: result, fixes };
+  }
+
+  /* ── Diff (line-level LCS) ── */
+  function lineDiff(orig, fixed) {
+    const a = orig.split('\n'), b = fixed.split('\n');
+    const m = a.length, n = b.length;
+    const dp = [];
+    for (let i = 0; i <= m; i++) { dp[i] = new Int32Array(n + 1); }
+    for (let i = 1; i <= m; i++)
+      for (let j = 1; j <= n; j++)
+        dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] + 1 : Math.max(dp[i-1][j], dp[i][j-1]);
+    const ops = []; let i = m, j = n;
+    while (i > 0 || j > 0) {
+      if (i > 0 && j > 0 && a[i-1] === b[j-1]) { ops.push({ t: '=', a: a[i-1], la: i, lb: j }); i--; j--; }
+      else if (j > 0 && (i === 0 || dp[i][j-1] >= dp[i-1][j])) { ops.push({ t: '+', b: b[j-1], lb: j }); j--; }
+      else { ops.push({ t: '-', a: a[i-1], la: i }); i--; }
+    }
+    return ops.reverse();
+  }
+
+  function renderDiff(orig, fixed) {
+    if (!orig && !fixed) return '<div class="no-changes">Nothing to diff</div>';
+    const ops = lineDiff(orig, fixed);
+    const CONTEXT = 3;
+    const visible = new Set();
+    ops.forEach((op, idx) => {
+      if (op.t !== '=') { for (let k = Math.max(0, idx - CONTEXT); k <= Math.min(ops.length - 1, idx + CONTEXT); k++) visible.add(k); }
+    });
+    let html = '', lastHidden = false;
+    ops.forEach((op, idx) => {
+      if (!visible.has(idx)) { if (!lastHidden) html += `<div class="diff-sep">⋯ unchanged lines hidden ⋯</div>`; lastHidden = true; return; }
+      lastHidden = false;
+      const ln = op.la || op.lb || '';
+      const sign = op.t === '+' ? '+' : op.t === '-' ? '-' : ' ';
+      const cls = op.t === '+' ? 'added' : op.t === '-' ? 'removed' : 'ctx';
+      const text = esc(op.a !== undefined ? op.a : op.b || '');
+      html += `<div class="diff-line ${cls}"><span class="diff-ln">${ln}</span><span class="diff-sign">${sign}</span><span class="diff-text">${text}</span></div>`;
+    });
+    return html || '<div class="no-changes" style="padding:16px">Files are identical</div>';
+  }
+
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  /* ── Main fix function ── */
+  function runFix() {
+    const input = DOM.inputTa.value;
+    if (!input.trim()) return;
+
+    /* Check daily limit */
+    const isPro = typeof LicenseManager !== 'undefined' &&
+                  LicenseManager.getStatus &&
+                  LicenseManager.getStatus() !== 'free';
+    if (!isPro && getUsage() >= 3) {
+      DOM.limitGate.style.display = 'block';
+      return;
+    }
+
+    const t0 = performance.now();
+    const fmt = DOM.fmtSelect.value === 'auto' ? detectFmt(input) : DOM.fmtSelect.value;
+    updateFmtBadge(fmt);
+
+    let result;
+    if (fmt === 'json')      result = fixJson(input);
+    else if (fmt === 'csv')  result = fixCsv(input);
+    else if (fmt === 'xml')  result = fixXml(input);
+    else                     result = { fixed: input, fixes: ['Could not detect format - no changes made'] };
+
+    state.lastOutput = result.fixed;
+    state.lastFixes  = result.fixes;
+    state.lastFmt    = fmt;
+
+    /* Show fixed output */
+    DOM.outputEmpty.style.display = 'none';
+    DOM.fixedTa.style.display = 'block';
+    DOM.fixedTa.value = result.fixed;
+
+    /* Diff */
+    DOM.diffBody.innerHTML = renderDiff(input, result.fixed);
+
+    /* Changes list */
+    if (result.fixes.length) {
+      DOM.changesBody.innerHTML = result.fixes.map(f =>
+        `<div class="change-item"><span class="change-icon">✓</span><span class="change-text">${esc(f)}</span></div>`
+      ).join('');
+    } else {
+      DOM.changesBody.innerHTML = '<div class="no-changes">No issues found - file looks valid!</div>';
+    }
+
+    /* Footer stats */
+    const fixN = result.fixes.filter(f => !f.startsWith('Warning')).length;
+    DOM.fixCountStat.innerHTML = fixN > 0
+      ? `<span class="stat-green">${fixN} fix${fixN > 1 ? 'es' : ''} applied</span>`
+      : '<span>No changes needed</span>';
+    DOM.outSizeStat.innerHTML = `<span class="val">${fmtSize(new Blob([result.fixed]).size)}</span> out`;
+
+    incUsage();
+    GoldStandard.History.save({ tool: 'File Detective', timestamp: Date.now(), inputSize: input.length, fmt });
+    showStatsBar(Math.round(performance.now() - t0), new Blob([input]).size, new Blob([result.fixed]).size);
+  }
+
+  /* ── Utilities ── */
+  function fmtSize(b) { if (b < 1024) return b + ' B'; if (b < 1048576) return (b/1024).toFixed(1) + ' KB'; return (b/1048576).toFixed(1) + ' MB'; }
+  function showStatsBar(ms, inB, outB) {
+    DOM.statsBar.textContent = `Fixed in ${ms}ms · ${fmtSize(inB)} in → ${fmtSize(outB)} out · 0 bytes sent to any server`;
+    DOM.statsBar.className = 'stats-bar visible';
+  }
+  function downloadOutput() {
+    if (!state.lastOutput) return;
+    const ext = state.lastFmt || 'txt';
+    const blob = new Blob([state.lastOutput], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob); const a = document.createElement('a');
+    a.href = url; a.download = `fixed.${ext}`; a.click(); URL.revokeObjectURL(url);
+  }
+
+  /* ── Input stat update ── */
+  DOM.inputTa.addEventListener('input', () => {
+    const v = DOM.inputTa.value;
+    DOM.inStat.textContent = v.length + ' chars';
+    const fmt = DOM.fmtSelect.value === 'auto' ? detectFmt(v) : DOM.fmtSelect.value;
+    updateFmtBadge(fmt);
+    updateUsageBadge();
+  });
+
+  /* ── Tabs ── */
+  document.querySelectorAll('.out-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.out-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.out-pane').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      $('pane-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  /* ── Samples ── */
+  const SAMPLE_JSON = `{\n  name: "Alice",\n  age: 30,\n  hobbies: ["reading", "coding",],\n  address: {\n    city: "Berlin",\n    zip: "10115"\n}`;
+  const SAMPLE_CSV  = `name,email,age\nAlice,alice@ex.com,30\nBob,bob@ex.com\nCarol,carol@ex.com,25,extra`;
+  const SAMPLE_XML  = `<users>\n  <user id=1>\n    <name>Alice</name>\n    <email>alice & bob@example.com</email>\n  <user>\n    <name>Bob</name>\n  </user>\n</users>`;
+
+  $('btn-sample-json').addEventListener('click', () => { DOM.inputTa.value = SAMPLE_JSON; DOM.inputTa.dispatchEvent(new Event('input')); });
+  $('btn-sample-csv').addEventListener('click',  () => { DOM.inputTa.value = SAMPLE_CSV;  DOM.inputTa.dispatchEvent(new Event('input')); });
+  $('btn-sample-xml').addEventListener('click',  () => { DOM.inputTa.value = SAMPLE_XML;  DOM.inputTa.dispatchEvent(new Event('input')); });
+  $('btn-clear-in').addEventListener('click', () => {
+    DOM.inputTa.value = ''; DOM.inStat.textContent = '0 chars'; updateFmtBadge('?');
+    DOM.outputEmpty.style.display = ''; DOM.fixedTa.style.display = 'none';
+    DOM.diffBody.innerHTML = '<div class="no-changes">Run Fix File to see diff</div>';
+    DOM.changesBody.innerHTML = '<div class="no-changes">No fixes applied yet</div>';
+    DOM.fixCountStat.textContent = '-'; DOM.outSizeStat.textContent = '-';
+    state.lastOutput = '';
+  });
+
+  $('btn-fix').addEventListener('click', runFix);
+
+
+  DOM.copyBtn.addEventListener('click', async () => {
+    if (!state.lastOutput) return;
+    try {
+      await navigator.clipboard.writeText(state.lastOutput);
+      DOM.copyBtn.textContent = 'Copied!'; DOM.copyBtn.style.color = '#2DD4BF'; DOM.copyBtn.style.borderColor = 'rgba(45,212,191,0.4)';
+      setTimeout(() => { DOM.copyBtn.textContent = 'Copy Fixed'; DOM.copyBtn.style.color = ''; DOM.copyBtn.style.borderColor = ''; }, 2000);
+    } catch(_) {}
+  });
+  DOM.downloadBtn.addEventListener('click', downloadOutput);
+
+  /* Panel resizer */
+  (function () {
+    const resizer = $('panel-resizer'), layout = $('tool-layout');
+    let startX, startW, dragging = false;
+    resizer.addEventListener('mousedown', e => { startX = e.clientX; startW = parseInt(getComputedStyle(layout).getPropertyValue('--left-w') || '480', 10); dragging = true; document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; });
+    document.addEventListener('mousemove', e => { if (!dragging) return; layout.style.setProperty('--left-w', Math.min(700, Math.max(260, startW + e.clientX - startX)) + 'px'); });
+    document.addEventListener('mouseup', () => { if (!dragging) return; dragging = false; document.body.style.cursor = ''; document.body.style.userSelect = ''; });
+  })();
+
+  /* Init */
+  GoldStandard.init({
+    toolName : 'File Detective',
+    tier     : 'free',
+    onConvert : runFix,
+    onDownload: downloadOutput,
+    shortcuts: [
+      { keys: ['Ctrl', 'Enter'], desc: 'Fix / process' },
+      { keys: ['Ctrl', 'S'],     desc: 'Download output' },
+      { keys: ['Ctrl', 'K'],     desc: 'Open tool switcher' },
+      { keys: ['Escape'],        desc: 'Close overlay / clear' },
+      { keys: ['?'],             desc: 'Toggle shortcuts' },
+    ],
+  });
+  updateUsageBadge();
+  updateFmtBadge('?');
+
+  /* The IIFE runs before LicenseManager.init() has restored the stored tier
+     from localStorage (license.js defers init to DOMContentLoaded). So the
+     first updateUsageBadge() call above sees tier='free' even for Pro
+     Business users. Re-run on DOMContentLoaded (catches initial restore)
+     and on every privbatch:tierchange event (catches mid-session validate). */
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', updateUsageBadge);
+  } else {
+    updateUsageBadge();
+  }
+  document.addEventListener('privbatch:tierchange', updateUsageBadge);
+
+})();
+</script>
+  <script src="../js/oss-page-chrome.js"></script>
+</body>
+</html>

@@ -1,0 +1,785 @@
+/* ════════════════════════════════════════
+   HEADER - Homepage variant
+   sticky, 58px, max-width 1180px, deep bg
+   ════════════════════════════════════════ */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(8,6,20,0.82);
+  backdrop-filter: blur(22px);
+  border-bottom: 1px solid var(--border);
+}
+
+.header-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 28px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Tool-page header overrides */
+header.header-tool {
+  position: relative;
+  z-index: 200;
+  background: rgba(19,17,28,0.88);
+  backdrop-filter: blur(18px);
+}
+
+header.header-tool .header-inner {
+  max-width: 1400px;
+  padding: 0 24px;
+  height: 52px;
+  gap: 14px;
+}
+
+/* ── Logo ── */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.logo-mark {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, rgba(167,139,250,0.22), rgba(124,58,237,0.12));
+  border: 1px solid rgba(167,139,250,0.28);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* Tool-page logo mark - flat rectangle style */
+header.header-tool .logo-mark {
+  width: auto;
+  height: auto;
+  background: rgba(167,139,250,0.1);
+  border: 1px solid rgba(167,139,250,0.22);
+  border-radius: 0;
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
+.logo-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-1);
+  letter-spacing: -0.3px;
+}
+
+header.header-tool .logo-name { font-size: 14px; letter-spacing: -0.2px; }
+
+/* ── Back link (tool pages only) ── */
+.back-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-3);
+  text-decoration: none;
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+
+.back-link:hover { color: var(--accent); }
+
+.header-sep {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+/* ── Breadcrumb (tool pages only) ── */
+.tool-crumb {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+.tool-crumb .sep { margin: 0 6px; }
+.tool-crumb .name { color: var(--accent); }
+
+/* ── Privacy badge - homepage pill variant ── */
+.privacy-badge {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(52,211,153,0.07);
+  border: 1px solid rgba(52,211,153,0.18);
+  border-radius: 99px;
+  padding: 5px 13px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--free);
+  flex-shrink: 0;
+}
+
+.privacy-badge .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--free);
+  flex-shrink: 0;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* Tool-page privacy badge - plain text */
+.privacy-badge.badge-inline {
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  font-size: 10px;
+  gap: 6px;
+}
+
+.privacy-badge.badge-inline .dot {
+  width: 5px;
+  height: 5px;
+  animation: pulse-opacity 2s ease-in-out infinite;
+  box-shadow: none;
+}
+
+/* ── Header spacer ── */
+.h-spacer { flex: 1; }
+
+/* ── License key input - homepage wrapper style ── */
+.license-wrap {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: border-color 0.2s;
+}
+
+.license-wrap:focus-within { border-color: var(--border-h); }
+
+.license-wrap .lw-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-3);
+  padding: 0 9px;
+  border-right: 1px solid var(--border);
+  height: 33px;
+  display: flex;
+  align-items: center;
+  background: rgba(255,255,255,0.02);
+}
+
+.license-wrap input {
+  background: transparent;
+  border: none;
+  color: var(--text-2);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 0 11px;
+  width: 178px;
+  height: 33px;
+  outline: none;
+}
+
+.license-wrap input::placeholder { color: var(--text-3); }
+
+/* ── License key input - tool-page standalone style ── */
+.license-input {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  padding: 5px 11px;
+  width: 175px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.license-input::placeholder { color: var(--text-3); }
+.license-input:focus { border-color: var(--accent); }
+
+/* ── License unlocked indicator ── */
+.license-unlocked {
+  display: none;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--free);
+  flex-shrink: 0;
+}
+
+.license-unlocked.visible { display: flex; }
+
+.license-unlocked::before {
+  content: '✓';
+  font-weight: 700;
+}
+
+/* ════════════════════════════════════════
+   TOOL BADGE - Live Preview indicator
+   Appears next to FREE/PRO badges on
+   tools that re-render on every keystroke.
+   ════════════════════════════════════════ */
+.tool-badge-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--teal);
+  white-space: nowrap;
+}
+
+.tool-badge-live::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--teal);
+  box-shadow: 0 0 6px rgba(45,212,191,0.55);
+  animation: pulse-opacity 1.8s ease-in-out infinite;
+}
+
+/* ════════════════════════════════════════
+   FOOTER
+   ════════════════════════════════════════ */
+footer {
+  border-top: 1px solid var(--border);
+  position: relative;
+  z-index: 1;
+}
+
+.footer-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 16px 28px;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+/* Tool-page footer - mono, compact */
+footer.footer-tool {
+  padding: 0;
+}
+
+footer.footer-tool .footer-inner {
+  max-width: none;
+  padding: 12px 24px;
+  gap: 20px;
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.footer-inner a {
+  color: var(--text-3);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.footer-inner a:hover { color: var(--accent); }
+
+.footer-note {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+/* ════════════════════════════════════════
+   BUTTONS
+   ════════════════════════════════════════ */
+.btn {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+  letter-spacing: -0.2px;
+  transition: opacity 0.15s, transform 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+.btn-fill {
+  background: var(--accent);
+  color: #080614;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid rgba(167,139,250,0.28);
+  color: var(--accent);
+}
+
+/* Convert button inside tool panels */
+.btn-convert {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 20px;
+  background: var(--accent);
+  color: #13111C;
+  border: none;
+  cursor: pointer;
+  letter-spacing: -0.2px;
+  transition: opacity 0.15s, transform 0.12s;
+}
+
+.btn-convert:hover { opacity: 0.88; transform: translateY(-1px); }
+
+.btn-secondary {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 10px 14px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-3);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.btn-secondary:hover { border-color: var(--border-h); color: var(--text-2); }
+
+/* ════════════════════════════════════════
+   GLASS PANEL (tool pages)
+   ════════════════════════════════════════ */
+.glass-panel {
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-s);
+  background: rgba(167,139,250,0.03);
+  flex-shrink: 0;
+}
+
+.panel-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.panel-title-accent { color: var(--accent); }
+.panel-spacer { flex: 1; }
+
+.panel-action {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-3);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 3px 6px;
+  transition: color 0.15s;
+}
+
+.panel-action:hover { color: var(--accent); }
+
+/* ════════════════════════════════════════
+   BATCH TOOL - Rigid fixed-height panels
+   Both panels share the same hard height.
+   Only the Expand button changes heights - 
+   and it changes both simultaneously.
+   ════════════════════════════════════════ */
+
+/* Hard fixed height on both panels - never grows from content */
+.left-panel,
+.output-panel {
+  height: calc(100vh  - 280px); /* fallback for browsers without dvh */
+  height: calc(100dvh - 280px); /* dynamic viewport - no jump when browser chrome hides */
+  min-height: 320px;
+}
+
+/* Expand ↕: both panels grow by the same amount simultaneously */
+body.panels-expanded .left-panel,
+body.panels-expanded .output-panel {
+  height: calc(100vh  - 80px);
+  height: calc(100dvh - 80px);
+}
+
+/* Output body fills remaining output-panel height, scrolls internally */
+.output-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Left panel: drop-zone + queue scrolls, Convert pinned ── */
+
+/* Scrollable area: drop zone + limit msg + file queue */
+.left-scroll {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* File queue padding */
+.file-queue {
+  padding: 0 14px 14px;
+}
+
+/* Convert / Clear - always visible, pinned to bottom of left panel */
+.left-footer {
+  flex-shrink: 0;
+  padding: 12px 14px;
+  border-top: 1px solid var(--border-s);
+  display: flex;
+  gap: 8px;
+}
+
+/* ── Output tab row: bounded width, horizontal scroll ── */
+
+/* Prevent right column from growing beyond its 1fr grid track */
+.right-col {
+  min-width: 0;
+}
+
+/* Tab row never expands the panel - scrolls horizontally when tabs overflow */
+.output-tabs {
+  min-width: 0;
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+/* Thin scrollbar on the tab row */
+.output-tabs::-webkit-scrollbar { height: 3px; }
+.output-tabs::-webkit-scrollbar-track { background: transparent; }
+.output-tabs::-webkit-scrollbar-thumb {
+  background: rgba(167,139,250,0.22);
+  border-radius: 2px;
+}
+
+/* Individual tabs never compress */
+.output-tab { flex-shrink: 0; }
+
+/* ════════════════════════════════════════
+   UPGRADE MODAL (shared)
+   ════════════════════════════════════════ */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10,8,18,0.75);
+  backdrop-filter: blur(6px);
+  z-index: 600;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-backdrop.is-open { display: flex; }
+
+.modal {
+  background: rgba(24,20,38,0.96);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(167,139,250,0.28);
+  padding: 36px;
+  max-width: 480px;
+  width: 90%;
+  position: relative;
+  animation: fadeUp 0.22s ease;
+}
+
+.modal-close {
+  position: absolute;
+  top: 14px; right: 14px;
+  background: none;
+  border: none;
+  color: var(--text-3);
+  font-size: 18px;
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.modal-close:hover { color: var(--text-1); }
+
+.modal-eyebrow {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.modal-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 6px;
+}
+
+.modal-sub {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.55;
+  margin-bottom: 24px;
+}
+
+.modal-plans {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.modal-plan {
+  border: 1px solid var(--border);
+  padding: 18px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.modal-plan.hi {
+  border-color: rgba(167,139,250,0.35);
+  background: rgba(167,139,250,0.05);
+}
+
+.modal-plan:hover { border-color: var(--accent); }
+
+.modal-plan-amount {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.8px;
+}
+
+.modal-plan-tier {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text-3);
+  margin-top: 2px;
+  margin-bottom: 10px;
+}
+
+.modal-plan-features {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.modal-plan-features li {
+  font-size: 12px;
+  color: var(--text-2);
+  display: flex;
+  gap: 6px;
+}
+
+.modal-plan-features li::before {
+  content: '✓';
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.modal-plan-btn {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 9px 14px;
+  display: block;
+  width: 100%;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s;
+}
+
+.modal-plan-btn:hover { opacity: 0.87; }
+
+.btn-plan-outline {
+  background: transparent;
+  border: 1px solid rgba(167,139,250,0.28) !important;
+  color: var(--accent);
+}
+
+.btn-plan-fill {
+  background: var(--accent);
+  color: #13111C;
+}
+
+.modal-note {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-3);
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* ════════════════════════════════════════
+   CARD CURSOR GLOW (homepage tool cards)
+   ════════════════════════════════════════ */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    280px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    rgba(167,139,250,0.13),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.35s;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.card:hover::before { opacity: 1; }
+
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(167,139,250,0.06) 0%, transparent 55%);
+  opacity: 0;
+  transition: opacity 0.22s;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.card:hover::after { opacity: 1; }
+
+/* ════════════════════════════════════════
+   MOBILE - clean status bar (≤768px)
+   Two rows: progress tracks · Download all
+   Everything else hidden for clarity.
+   ════════════════════════════════════════ */
+/* Desktop / mobile button toggle for the gold-standard settings bar.
+   Both #pb-btn-shortcuts and #pb-btn-switcher are always in the DOM (the
+   init-time width check broke when the window was resized after load - see
+   file-fixer.html bug 2026-05-24). CSS media query toggles which one shows. */
+.pb-btn-desktop-only { display: inline-flex; }
+.pb-btn-mobile-only  { display: none; }
+@media (max-width: 767px) {
+  .pb-btn-desktop-only { display: none; }
+  .pb-btn-mobile-only  { display: inline-flex; }
+}
+
+@media (max-width: 768px) {
+  /* Bar: column layout, auto height, clear padding */
+  .stats-bar {
+    flex-direction: column;
+    height: auto;
+    padding: 12px 16px;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  /* Hide: divider, stats block, pulse dot, text labels, pct labels,
+     "Download ready" button, certificate button */
+  .sb-vdivider,
+  .sb-stats,
+  .sb-pulse-icon,
+  .sb-row-label,
+  .sb-label-pct,
+  .btn-sb-ready,
+  .btn-cert { display: none !important; }
+
+  /* Progress section: fill full width, bare tracks only */
+  .sb-left    { flex: none; width: 100%; }
+  .sb-progress-stack { gap: 5px; }
+  .sb-progress-row   { gap: 0; }
+  .sb-track          { height: 5px; min-width: 0; flex: 1; }
+
+  /* Download all: full width, large tap target */
+  .sb-right {
+    margin-left: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .btn-sb-all {
+    width: 100%;
+    min-height: 48px;
+    font-size: 14px;
+    flex: none;
+  }
+}
+
+/* ════════════════════════════════════════
+   MOBILE - prevent horizontal overflow
+   License key moved out of header on mobile;
+   shown in dedicated section below hero.
+   ════════════════════════════════════════ */
+@media (max-width: 520px) {
+  /* Tighten container padding */
+  .container      { padding: 0 16px; }
+  .container-wide { padding: 0 16px; }
+
+  /* Header: hide items that overflow at 375px */
+  .license-wrap               { display: none; }  /* homepage - shown in mobile-license-strip */
+  .license-input              { display: none; }  /* tool pages */
+  .license-unlocked           { display: none; }
+  .tool-crumb                 { display: none; }
+  .header-sep                 { display: none; }
+  .privacy-badge.badge-inline { display: none; }
+
+  /* Footer: wrap links rather than overflow */
+  .footer-inner { flex-wrap: wrap; gap: 10px; }
+  .footer-note  { display: none; }
+}
+
+/* ════════════════════════════════════════
+   TOOL-PAGE HEADER WRAP (M1 - Pass 3)
+   Below 640px, allow the elements gold-standard.js / profile.js / gdpr-pack.js
+   inject (theme toggle, Profile, job indicator) to wrap to a second row
+   instead of overlapping the logo + back-link. Kept separate from the 520px
+   block so larger phones in landscape and narrow tablets (521-640px) get the
+   wrap behaviour even though the aggressive content-hide rules above only
+   kick in at <=520px.
+   ════════════════════════════════════════ */
+@media (max-width: 640px) {
+  header.header-tool .header-inner {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 52px;
+    padding: 8px 16px;
+    gap: 8px 10px;
+    row-gap: 6px;
+  }
+  header.header-tool .h-spacer { display: none; }
+  #pb-theme-toggle,
+  #pb-profile-ctl,
+  #pb-job-indicator { margin-left: 0; }
+}

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/assets/icon-192.png">
+  <title>Diff Tool - Free, Private, Offline | PrivBatch</title>
+  <meta name="description" content="Compare two texts side by side with color-coded diff output. Runs 100% in your browser - no uploads.">
+  <link rel="canonical" href="https://privbatch.com/tools/diff-tool.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/light-mode.css">
+  <script src="../js/config.js"></script>
+  <script src="../js/gold-standard.js"></script>
+  <style>
+    body { display: flex; flex-direction: column; min-height: 100vh; box-sizing: border-box; }
+    .tool-header { position: relative; z-index: 1; background: var(--bg); border-bottom: 1px solid var(--border-s); flex-shrink: 0; }
+    .tool-header-inner { max-width: 1400px; margin: 0 auto; padding: 10px 24px; display: flex; align-items: center; gap: 16px; }
+    .tool-title { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; color: var(--text-1); }
+    .tool-header-spacer { flex: 1; }
+    .tool-badge-free { font-family: var(--mono); font-size: 9px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--free); display: flex; align-items: center; gap: 5px; }
+    .tool-badge-free::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--free); }
+    .settings-bar { position: relative; z-index: 96; background: rgba(22,19,34,0.98); border-bottom: 1px solid var(--border); padding: 0 24px; height: 44px; display: flex; align-items: center; gap: 16px; overflow: visible; flex-shrink: 0; }
+    .sbar-group { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+    .sbar-label { font-family: var(--mono); font-size: 10px; color: var(--text-3); white-space: nowrap; }
+    .sbar-sep { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
+    .sbar-btn { font-family: var(--mono); font-size: 10px; font-weight: 600; padding: 4px 10px; cursor: pointer; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-3); transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
+    .sbar-btn:hover { color: var(--text-1); border-color: rgba(167,139,250,0.4); }
+    .sbar-btn.active { background: rgba(167,139,250,0.15); color: var(--accent); border-color: rgba(167,139,250,0.4); }
+    .sbar-toggle { display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+    .sbar-mode-btn { font-family: var(--mono); font-size: 10px; font-weight: 600; padding: 4px 10px; cursor: pointer; border: none; background: transparent; color: var(--text-3); transition: background 0.15s, color 0.15s; white-space: nowrap; }
+    .sbar-mode-btn.active { background: rgba(167,139,250,0.15); color: var(--accent); }
+    .sbar-mode-sep { width: 1px; background: var(--border); }
+
+    /* Three-column layout: left | resizer | right */
+    .tool-layout { display: grid; grid-template-columns: 1fr 8px 1fr; max-width: 1400px; width: 100%; margin: 0 auto; padding: 12px 24px; box-sizing: border-box; gap: 0; align-items: stretch; position: relative; z-index: 1; }
+    .panel-resizer { display: flex; align-items: flex-start; justify-content: center; padding-top: 20px; cursor: col-resize; user-select: none; z-index: 10; }
+    .panel-resizer::after { content: ''; width: 2px; height: 32px; background: var(--border); border-radius: 1px; transition: background 0.15s; }
+    .panel-resizer:hover::after { background: rgba(167,139,250,0.4); }
+
+    .input-panel { display: flex; flex-direction: column; overflow: hidden; }
+    .input-textarea { flex: 1; min-height: 240px; resize: none; font-family: var(--mono); font-size: 12px; color: var(--text-1); background: transparent; border: none; outline: none; line-height: 1.7; padding: 14px 16px; }
+    .input-footer { padding: 6px 10px; border-top: 1px solid var(--border-s); display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .input-btn { font-family: var(--mono); font-size: 10px; font-weight: 600; padding: 3px 8px; cursor: pointer; border: 1px solid var(--border); border-radius: 5px; background: transparent; color: var(--text-3); transition: all 0.15s; }
+    .input-btn:hover { color: var(--text-1); border-color: rgba(167,139,250,0.4); }
+    .input-btn.primary { background: var(--accent); color: #0e0b1a; border-color: var(--accent); }
+    .input-btn.primary:hover { opacity: 0.85; }
+    .input-spacer { flex: 1; }
+
+    /* Full-width diff output below */
+    .diff-output-wrap { max-width: 1400px; width: 100%; margin: 0 auto; padding: 0 24px 12px; box-sizing: border-box; }
+    .diff-panel { display: flex; flex-direction: column; overflow: hidden; }
+    .diff-body { min-height: 160px; overflow-y: auto; }
+    .diff-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 120px; gap: 8px; color: var(--text-3); font-family: var(--mono); font-size: 11px; }
+    .diff-empty-icon { font-size: 28px; opacity: 0.25; }
+    .diff-output-footer { padding: 8px 16px; border-top: 1px solid var(--border-s); display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+    .output-stat { font-family: var(--mono); font-size: 10px; color: var(--text-3); }
+    .stats-bar { font-family: var(--mono); font-size: 10px; color: var(--free); padding: 5px 16px; display: none; flex-shrink: 0; animation: stats-in 0.25s ease-out; border-top: 1px solid rgba(45,212,191,0.15); background: rgba(45,212,191,0.04); }
+    .stats-bar.visible { display: block; }
+    @keyframes stats-in { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Diff line styles */
+    .diff-line { display: flex; font-family: var(--mono); font-size: 12px; line-height: 1.6; }
+    .diff-line-num { min-width: 36px; text-align: right; padding: 1px 8px; color: var(--text-3); font-size: 10px; flex-shrink: 0; user-select: none; border-right: 1px solid rgba(167,139,250,0.08); }
+    .diff-line-sign { width: 18px; text-align: center; flex-shrink: 0; font-weight: 700; padding: 1px 0; }
+    .diff-line-text { flex: 1; padding: 1px 10px; white-space: pre-wrap; word-break: break-all; }
+    .diff-line.added { background: rgba(45,212,191,0.08); }
+    .diff-line.added .diff-line-sign { color: #2DD4BF; }
+    .diff-line.added .diff-line-text { color: #2DD4BF; }
+    .diff-line.removed { background: rgba(239,68,68,0.08); }
+    .diff-line.removed .diff-line-sign { color: #EF4444; }
+    .diff-line.removed .diff-line-text { color: #EF4444; text-decoration: line-through; }
+    .diff-line.unchanged .diff-line-sign { color: var(--text-3); }
+    .diff-line.unchanged .diff-line-text { color: var(--text-2); }
+    .diff-sep { padding: 4px 16px; font-family: var(--mono); font-size: 10px; color: var(--text-3); background: rgba(167,139,250,0.04); border-top: 1px solid rgba(167,139,250,0.06); border-bottom: 1px solid rgba(167,139,250,0.06); }
+
+    @media (max-width: 900px) { .tool-layout { grid-template-columns: 1fr !important; padding: 8px 16px; } .panel-resizer { display: none; } .diff-output-wrap { padding: 0 16px 12px; } }
+  </style>
+</head>
+<body>
+
+  <div class="bg-layer dot-grid" aria-hidden="true">
+    <div class="blob blob-tool-1"></div>
+    <div class="blob blob-tool-2"></div>
+    <div class="blob blob-tool-3"></div>
+  </div>
+
+  <header class="header-tool">
+    <div class="header-inner">
+      <a class="back-link" href="../index.html">&larr; All tools</a>
+      <div class="header-sep"></div>
+      <a href="../index.html"><img src="/assets/logo-horizontal.svg" alt="PrivBatch" height="32"></a>
+      <span class="tool-crumb"><span class="sep">/</span><span class="name">Diff Tool</span></span>
+      <div class="h-spacer"></div>
+      <div class="privacy-badge badge-inline"><div class="dot" aria-hidden="true"></div>100% offline</div>
+      <input class="license-input" id="license-input" type="text" placeholder="&#128273; license key" aria-label="License key">
+      <span class="license-unlocked" aria-live="polite"></span>
+    </div>
+  </header>
+
+  <div class="tool-header">
+    <div class="tool-header-inner">
+      <span class="tool-title">Diff Tool</span>
+      <div class="tool-header-spacer"></div>
+      <span class="tool-badge-free">Free tool · No limits</span>
+    </div>
+  </div>
+
+  <div class="settings-bar">
+    <div class="sbar-group">
+      <span class="sbar-label">Ignore:</span>
+      <div class="sbar-toggle">
+        <button class="sbar-mode-btn active" id="ig-none">None</button>
+        <div class="sbar-mode-sep"></div>
+        <button class="sbar-mode-btn" id="ig-case">Case</button>
+        <div class="sbar-mode-sep"></div>
+        <button class="sbar-mode-btn" id="ig-ws">Whitespace</button>
+      </div>
+    </div>
+    <!-- GS buttons (Recent, Prove It, Shortcuts) injected by gold-standard.js -->
+  </div>
+
+  <!-- Two input panels side by side -->
+  <div class="tool-layout" id="tool-layout">
+    <div class="glass-panel input-panel">
+      <div class="panel-header">
+        <span class="panel-title">Original</span>
+        <div class="panel-spacer"></div>
+        <button class="input-btn" id="sample-a">Sample</button>
+      </div>
+      <textarea class="input-textarea" id="text-a" spellcheck="false" placeholder="Paste original text here…"></textarea>
+      <div class="input-footer">
+        <button class="input-btn" id="clear-a">Clear</button>
+        <div class="input-spacer"></div>
+        <button class="input-btn primary" id="diff-btn">Compare ±</button>
+      </div>
+    </div>
+
+    <div class="panel-resizer" id="panel-resizer" aria-hidden="true"></div>
+
+    <div class="glass-panel input-panel">
+      <div class="panel-header">
+        <span class="panel-title">Modified</span>
+        <div class="panel-spacer"></div>
+        <button class="input-btn" id="sample-b">Sample</button>
+      </div>
+      <textarea class="input-textarea" id="text-b" spellcheck="false" placeholder="Paste modified text here…"></textarea>
+      <div class="input-footer">
+        <button class="input-btn" id="clear-b">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Full-width diff output -->
+  <div class="diff-output-wrap">
+    <div class="glass-panel diff-panel">
+      <div class="panel-header">
+        <span class="panel-title panel-title-accent">Diff Output</span>
+        <div class="panel-spacer"></div>
+        <span style="font-family:var(--mono);font-size:9px;color:#2DD4BF" id="diff-adds"></span>
+        <span style="font-family:var(--mono);font-size:9px;color:#EF4444;margin-left:12px" id="diff-dels"></span>
+        <button class="panel-action" id="copy-btn" style="margin-left:12px">Copy</button>
+        <button class="panel-action" id="download-btn">Download</button>
+      </div>
+      <div class="diff-body" id="diff-body">
+        <div class="diff-empty" id="diff-empty">
+          <div class="diff-empty-icon">±</div>
+          Paste text in both panels and click Compare
+        </div>
+        <div id="diff-lines"></div>
+      </div>
+      <div class="diff-output-footer">
+        <span class="output-stat" id="out-stat">Ready</span>
+      </div>
+    </div>
+    <div class="stats-bar" id="stats-bar" aria-live="polite"></div>
+  </div>
+
+  <footer class="footer-tool">
+    <div class="footer-inner">
+      <span>© 2026 PrivBatch</span>
+      <a href="../privacy.html">Privacy</a>
+      <a href="../changelog.html">Changelog</a>
+      <a href="../licence.html">Licence</a>
+      <span class="footer-note">All processing is local - zero uploads, zero logs</span>
+    </div>
+  </footer>
+
+  <!-- GS overlays (Prove It, Shortcuts, Switcher) injected by gold-standard.js -->
+
+  <script src="../js/license.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    const $ = id => document.getElementById(id);
+
+    const DOM = {
+      statsBar: $('stats-bar'), copyBtn: $('copy-btn'), downloadBtn: $('download-btn'),
+      outStat: $('out-stat'), textA: $('text-a'), textB: $('text-b'),
+      diffEmpty: $('diff-empty'), diffLines: $('diff-lines'),
+    };
+
+    const state = { lastOutput: '', ignoreCase: false, ignoreWs: false };
+
+    function fmtSize(b) { if (b < 1024) return b + ' B'; if (b < 1048576) return (b/1024).toFixed(1)+' KB'; return (b/1048576).toFixed(1)+' MB'; }
+    function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function showStatsBar(ms, inB) { DOM.statsBar.textContent = `Diffed in ${ms}ms · ${fmtSize(inB)} compared · 0 bytes sent`; DOM.statsBar.className = 'stats-bar visible'; }
+
+    /* LCS-based line diff */
+    function lcsMatrix(a, b) {
+      const m = a.length, n = b.length;
+      const dp = Array.from({ length: m + 1 }, () => new Int32Array(n + 1));
+      for (let i = 1; i <= m; i++)
+        for (let j = 1; j <= n; j++)
+          dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] + 1 : Math.max(dp[i-1][j], dp[i][j-1]);
+      return dp;
+    }
+
+    function diffLines(a, b) {
+      function norm(s) {
+        if (state.ignoreCase) s = s.toLowerCase();
+        if (state.ignoreWs) s = s.replace(/\s+/g, ' ').trim();
+        return s;
+      }
+      const na = a.map(norm), nb = b.map(norm);
+      const dp = lcsMatrix(na, nb);
+      const result = [];
+      let i = a.length, j = b.length;
+      while (i > 0 || j > 0) {
+        if (i > 0 && j > 0 && na[i-1] === nb[j-1]) {
+          result.unshift({ type: 'unchanged', text: a[i-1], lineA: i, lineB: j }); i--; j--;
+        } else if (j > 0 && (i === 0 || dp[i][j-1] >= dp[i-1][j])) {
+          result.unshift({ type: 'added', text: b[j-1], lineB: j }); j--;
+        } else {
+          result.unshift({ type: 'removed', text: a[i-1], lineA: i }); i--;
+        }
+      }
+      return result;
+    }
+
+    const SAMPLE_A = `function greet(name) {
+  console.log("Hello, " + name);
+  return true;
+}
+
+const users = ["Alice", "Bob"];
+users.forEach(u => greet(u));`;
+
+    const SAMPLE_B = `function greet(name, greeting = "Hello") {
+  console.log(greeting + ", " + name + "!");
+  return name.length > 0;
+}
+
+const users = ["Alice", "Bob", "Charlie"];
+users.forEach(u => greet(u));
+console.log("Done");`;
+
+    function runDiff() {
+      const t0 = performance.now();
+      const a = DOM.textA.value.split('\n');
+      const b = DOM.textB.value.split('\n');
+      if (!DOM.textA.value && !DOM.textB.value) { renderEmpty(); return; }
+
+      const diffs = diffLines(a, b);
+      let adds = 0, dels = 0;
+
+      /* Collapse unchanged runs > 3 lines */
+      const CONTEXT = 3;
+      const visible = new Set();
+      diffs.forEach((d, i) => {
+        if (d.type !== 'unchanged') {
+          for (let k = Math.max(0, i - CONTEXT); k <= Math.min(diffs.length - 1, i + CONTEXT); k++) visible.add(k);
+        }
+      });
+
+      const plainLines = [];
+      let html = '', lastSkipped = false;
+      diffs.forEach((d, i) => {
+        if (d.type === 'added') adds++;
+        if (d.type === 'removed') dels++;
+
+        if (!visible.has(i) && diffs.some(x => x.type !== 'unchanged')) {
+          if (!lastSkipped) { html += `<div class="diff-sep">@@ ${diffs.length - diffs.filter(x => x.type !== 'unchanged').length} unchanged lines hidden @@</div>`; lastSkipped = true; }
+          return;
+        }
+        lastSkipped = false;
+
+        const sign = d.type === 'added' ? '+' : d.type === 'removed' ? '-' : ' ';
+        const lineNum = d.type === 'added' ? (d.lineB || '') : (d.lineA || '');
+        html += `<div class="diff-line ${d.type}"><span class="diff-line-num">${lineNum}</span><span class="diff-line-sign">${sign}</span><span class="diff-line-text">${esc(d.text)}</span></div>`;
+        plainLines.push(`${sign} ${d.text}`);
+      });
+
+      state.lastOutput = plainLines.join('\n');
+      DOM.diffEmpty.style.display = 'none';
+      DOM.diffLines.innerHTML = html;
+      $('diff-adds').textContent = `+${adds} added`;
+      $('diff-dels').textContent = `-${dels} removed`;
+      DOM.outStat.textContent = `${adds} additions · ${dels} deletions · ${diffs.filter(d=>d.type==='unchanged').length} unchanged`;
+      GoldStandard.History.save({ tool: 'Diff Tool', timestamp: Date.now(), inputSize: new Blob([DOM.textA.value + DOM.textB.value]).size });
+      showStatsBar(Math.round(performance.now() - t0), new Blob([DOM.textA.value + DOM.textB.value]).size);
+    }
+
+    function renderEmpty() {
+      state.lastOutput = '';
+      DOM.diffEmpty.style.display = '';
+      DOM.diffLines.innerHTML = '';
+      $('diff-adds').textContent = '';
+      $('diff-dels').textContent = '';
+      DOM.outStat.textContent = 'Ready';
+      DOM.statsBar.className = 'stats-bar';
+    }
+
+    function downloadOutput() {
+      if (!state.lastOutput) return;
+      const blob = new Blob([state.lastOutput], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob); const a = document.createElement('a');
+      a.href = url; a.download = 'diff.patch'; a.click(); URL.revokeObjectURL(url);
+    }
+
+    $('diff-btn').addEventListener('click', runDiff);
+    $('clear-a').addEventListener('click', () => { DOM.textA.value = ''; renderEmpty(); });
+    $('clear-b').addEventListener('click', () => { DOM.textB.value = ''; renderEmpty(); });
+    $('sample-a').addEventListener('click', () => { DOM.textA.value = SAMPLE_A; });
+    $('sample-b').addEventListener('click', () => { DOM.textB.value = SAMPLE_B; });
+
+    /* Ignore toggles */
+    function setIgnore(id, prop) {
+      state[prop] = !state[prop];
+      $(id).classList.toggle('active', state[prop]);
+      if (DOM.textA.value || DOM.textB.value) runDiff();
+    }
+    $('ig-none').addEventListener('click', () => { state.ignoreCase = false; state.ignoreWs = false; ['ig-none','ig-case','ig-ws'].forEach(i => $(i).classList.remove('active')); $('ig-none').classList.add('active'); if (DOM.textA.value || DOM.textB.value) runDiff(); });
+    $('ig-case').addEventListener('click', () => { state.ignoreCase = !state.ignoreCase; $('ig-case').classList.toggle('active', state.ignoreCase); $('ig-none').classList.remove('active'); if (DOM.textA.value || DOM.textB.value) runDiff(); });
+    $('ig-ws').addEventListener('click', () => { state.ignoreWs = !state.ignoreWs; $('ig-ws').classList.toggle('active', state.ignoreWs); $('ig-none').classList.remove('active'); if (DOM.textA.value || DOM.textB.value) runDiff(); });
+
+    DOM.copyBtn.addEventListener('click', async () => {
+      if (!state.lastOutput) return;
+      try {
+        await navigator.clipboard.writeText(state.lastOutput);
+        DOM.copyBtn.textContent = 'Copied!'; DOM.copyBtn.style.color = '#2DD4BF'; DOM.copyBtn.style.borderColor = 'rgba(45,212,191,0.4)';
+        setTimeout(() => { DOM.copyBtn.textContent = 'Copy'; DOM.copyBtn.style.color = ''; DOM.copyBtn.style.borderColor = ''; }, 2000);
+      } catch (_) {}
+    });
+    DOM.downloadBtn.addEventListener('click', downloadOutput);
+
+    (function () {
+      const resizer = $('panel-resizer'), layout = $('tool-layout');
+      let startX, startW, dragging = false;
+      resizer.addEventListener('mousedown', e => { startX = e.clientX; startW = layout.offsetWidth / 2; dragging = true; document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; });
+      document.addEventListener('mousemove', e => {
+        if (!dragging) return;
+        const total = layout.offsetWidth - 8;
+        const newW = Math.min(total * 0.7, Math.max(total * 0.3, startW + e.clientX - startX));
+        layout.style.gridTemplateColumns = `${newW}px 8px 1fr`;
+      });
+      document.addEventListener('mouseup', () => { if (!dragging) return; dragging = false; document.body.style.cursor = ''; document.body.style.userSelect = ''; });
+    })();
+
+    GoldStandard.init({
+      toolName : 'Diff Tool',
+      tier     : 'free',
+      onConvert : runDiff,
+      onDownload: downloadOutput,
+      shortcuts: [
+        { keys: ['Ctrl', 'Enter'], desc: 'Convert / process' },
+        { keys: ['Ctrl', 'S'],     desc: 'Download output' },
+        { keys: ['Ctrl', 'K'],     desc: 'Open tool switcher' },
+        { keys: ['Escape'],        desc: 'Close overlay / clear' },
+        { keys: ['?'],             desc: 'Toggle shortcuts' },
+      ],
+    });
+
+  })();
+  </script>
+  <script src="../js/oss-page-chrome.js"></script>
+</body>
+</html>
